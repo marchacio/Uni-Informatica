@@ -1,0 +1,1 @@
+float average(int hm);

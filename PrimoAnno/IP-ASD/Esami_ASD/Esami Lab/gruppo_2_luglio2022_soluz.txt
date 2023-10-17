@@ -1,0 +1,226 @@
+/****************************************************/
+/*          ESAME DI LABORATORIO DI ASD             */
+/****************************************************/
+
+// Descrizione:
+// In questo esame consideriamo grafi rappresentati tramite matrice di adiacenza. Il grafo viene utilizzato per rappresentare persone e i loro incontri (su Teams).
+// Di conseguenza, il grafo e' non orientato e ogni arco e' etichettato dal numero di minuti le persone sono state in contatto. Per esempio, supponiamo di avere il grafo seguente:
+// 0 1 0
+// 1 0 3
+// 0 3 0
+// Questo grafo contiene 3 persone, dove Persona 0 e' stata in meeting con Persona 1 per 1 ora, e Persona 1 e' stata in contatto con Persona 2 per 3 ore.
+
+
+#include <iostream>
+
+using namespace std;
+
+/****************************************************************/
+// Definizione Lista semplice ausiliaria
+/****************************************************************/
+
+struct Cella {
+    int id;
+    Cella* prossimo;
+};
+
+typedef Cella* Lista; // definiamo lista come un puntatore a cella
+
+Lista lista_vuota = nullptr; // la lista vuota corrisponde a nullptr
+int elemento_vuoto = -1; // viene ritornato quando la lista è vuota e si prova a rimuovere un elemento da essa
+
+// funzione che crea la lista vuota
+void creaLista(Lista& lista) {
+    lista = lista_vuota;
+}
+
+// funzione che aggiunge elemento alla lista (aggiunge in coda)
+void aggiungiElemento(Lista& lista, int id) {
+    if(lista == lista_vuota) {
+        lista = new Cella();
+        lista->id = id;
+        lista->prossimo = lista_vuota;
+    }
+    else {
+        Lista aux = lista;
+        while(aux->prossimo != lista_vuota) {
+            aux = aux->prossimo;
+        }
+        aux->prossimo = new Cella();
+        aux->prossimo->id = id;
+        aux->prossimo->prossimo = lista_vuota;
+    }
+}
+
+// funzione che rimuove elemento dalla lista (rimuove in testa)
+int rimuoviElemento(Lista& lista) {
+    if(lista == lista_vuota) {
+        return elemento_vuoto;
+    }
+    int elemento = lista->id;
+    Lista aux = lista;
+    lista = lista->prossimo;
+    delete aux;
+    return elemento;
+}
+
+// funzione che stampa a video la lista
+void printLista(Lista lista) {
+    cout << "[";
+    while(lista != lista_vuota) {
+        cout << " Persona " << lista->id;
+        lista = lista->prossimo;
+        if(lista != lista_vuota) cout << ",";
+    }
+    cout << " ]" << endl;
+}
+
+/****************************************************************/
+// Definizione Grafo con matrice di adiacenza
+/****************************************************************/
+
+typedef int Tempo; // durata del contatto
+
+const int max_persone = 10; // massimo numero di persone che il grafo puo' attualmente contenere
+
+struct Grafo {
+    int n_persone; // numero corrente di persone nel grafo
+    Tempo meetings[max_persone][max_persone]; // matrice di adiacenza dei meetings tra le persone
+};
+
+// funzione che inizializza il grafo con n_persone
+void inizializzaGrafo(Grafo& grafo, int n_persone) {
+    if(n_persone > max_persone) {
+        return;
+    }
+    grafo.n_persone = n_persone;
+    for(int i = 0; i < grafo.n_persone; i++) {
+        for(int j = 0; j < grafo.n_persone; j++) {
+            grafo.meetings[i][j] = 0;
+        }
+    }
+}
+
+// funzione che stampa a video il grafo
+void printGrafo(Grafo grafo) {
+    for(int i = 0; i < grafo.n_persone; i++) {
+        cout << "Persona " << i << " e' stata in meeting con: ";
+        bool contatto = false;
+        for(int j = 0; j < grafo.n_persone; j++) {
+            if(grafo.meetings[i][j] > 0) {
+                cout << "- Persona " << j << " per " << grafo.meetings[i][j] << (grafo.meetings[i][j] > 1 ? " ore; " : " ora; ");
+                contatto = true;
+            }
+        }
+        if(!contatto) {
+            cout << "Nessuno";
+        }
+        cout << endl;
+    }
+}
+
+// funzione che registra un meeting tra persona id_persona1 e persona id_persona2 (tale meeting e' stato di durata_contatto minuti)
+void registraMeeting(Grafo& grafo, int id_persona1, int id_persona2, Tempo durata_contatto) {
+    if(id_persona1 < 0 || id_persona1 > grafo.n_persone) return;
+    if(id_persona2 < 0 || id_persona2 > grafo.n_persone) return;
+    grafo.meetings[id_persona1][id_persona2] = durata_contatto;
+    grafo.meetings[id_persona2][id_persona1] = durata_contatto;
+}
+
+// funzione che ritorna il numero totale di ore che una persona ha trascorso facendo meeting
+int numeroTotaleOreMeeting(Grafo grafo, int id_persona) {
+    if(id_persona < 0 || id_persona > grafo.n_persone) return elemento_vuoto;
+    int tot = 0;
+    for(int j = 0; j < grafo.n_persone; j++) {
+        tot += grafo.meetings[id_persona][j];
+    }
+    return tot;
+}
+
+// funzione che ritorna lista di persone che non hanno avuto alcun meeting
+Lista personeCheNonHannoAvutoMeeting(Grafo grafo) {
+    Lista persone;
+    creaLista(persone);
+    for(int i = 0; i < grafo.n_persone; i++) {
+        bool meeting = false;
+        for(int j = 0; j < grafo.n_persone; j++) {
+            if(grafo.meetings[i][j] != 0) {
+                meeting = true;
+                break;
+            }
+        }
+        if(!meeting){
+            aggiungiElemento(persone, i);
+        }
+    }
+    return persone;
+}
+
+// funzione ausiliaria ricorsiva per trovare tutte le persone che possono ricevere informazione a partire da id_persone
+void possibiliLeakInformazioniAux(Grafo grafo, int id_infetto, bool* visitati, Lista& infetti) {
+    if(id_infetto < 0 || id_infetto > grafo.n_persone) return;
+    aggiungiElemento(infetti, id_infetto);
+    visitati[id_infetto] = true;
+    for(int j = 0; j < grafo.n_persone; j++) {
+        if(grafo.meetings[id_infetto][j] >= 3 && !visitati[j]) {
+            possibiliLeakInformazioniAux(grafo, j, visitati, infetti);
+        }
+    }
+}
+
+// funzione che ritorna una lista contenente tutte le persone che hanno comunicato (direttamete e indirettamente) con id_persona (la lista ritornata non contiene id_persona)
+// questa lista rappresenta una possibile propagazione di informazioni dalla persona id_persona
+Lista possibiliLeakInformazioni(Grafo grafo, int id_persona) {
+    bool* visitati = new bool[grafo.n_persone];
+    for(int i = 0; i < grafo.n_persone; i++) {
+        visitati[i] = false;
+    }
+    Lista persone;
+    creaLista(persone);
+    possibiliLeakInformazioniAux(grafo, id_persona, visitati, persone);
+    rimuoviElemento(persone);
+    return persone;
+}
+
+/****************************************************************/
+// MAIN con casi di test
+/****************************************************************/
+int main() {
+    int n_persone = 5; // inizializziamo grafo con 5 persone
+    Grafo grafo;
+    inizializzaGrafo(grafo, n_persone);
+
+    cout << "****** ESECUZIONE  ****** " << endl << endl;
+	cout << "*** FUNZIONE 1 *** " << endl;
+    registraMeeting(grafo, 0, 1, 2); // registriamo meeting tra Persona 0 e Persona 1 per 2 minuti
+    registraMeeting(grafo, 0, 2, 1); // registriamo meeting tra Persona 0 e Persona 2 per 1 minuto
+    registraMeeting(grafo, 1, 2, 3); // registriamo meeting tra Persona 1 e Persona 2 per 3 minuti
+    registraMeeting(grafo, 1, 3, 5); // registriamo meeting tra Persona 1 e Persona 3 per 5 minuti
+    cout << "meetings OSSERVATI:" << endl;
+    printGrafo(grafo); // stampa il grafo a video
+    cout << endl;
+    cout << "La tua funzione e' corretta se sopra ha stampato (dopo meetings OSSERVATI):" << endl;
+    cout << "Persona 0 e' stata in contatto con: - Persona 1 per 2 ore; - Persona 2 per 1 ora;" << endl;
+    cout << "Persona 1 e' stata in contatto con: - Persona 0 per 2 ore; - Persona 2 per 3 ore; - Persona 3 per 5 ore;" << endl;
+    cout << "Persona 2 e' stata in contatto con: - Persona 0 per 1 ora; - Persona 1 per 3 ore;" << endl;
+    cout << "Persona 3 e' stata in contatto con: - Persona 1 per 5 ore;" << endl;
+    cout << "Persona 4 e' stata in contatto con: Nessuno" << endl;
+
+    cout << endl << "*** FUNZIONE 2 *** " << endl;
+    cout << "TEST numero di ore totali di meeting per Persona 1: " << (numeroTotaleOreMeeting(grafo, 1) == 10 ? "PASSATO" : "FALLITO") << endl;
+
+    cout << endl << "*** FUNZIONE 3 *** " << endl;
+    Lista persone = personeCheNonHannoAvutoMeeting(grafo);
+    cout << "Persone che non hanno avuto meetings: ";
+    printLista(persone);
+    cout << endl << "La tua funzione e' corretta se sopra ha stampato: " << endl;
+    cout << "Persone che non hanno avuto meetings: [ Persona 4 ]" << endl;
+
+    cout << endl << "*** FUNZIONE 4 *** " << endl;
+    registraMeeting(grafo, 3, 4, 5); // registriamo contatto diretto tra Persona 3 e Persona 4 per 6 minuti
+    cout << "Possibili leak di informazioni (diretti e indiretti) da Persona 1: ";
+    printLista(possibiliLeakInformazioni(grafo, 1));
+    cout << endl;
+    cout << "La tua funzione e' corretta se sopra ha stampato: (l'ordine degli elementi stampati non ha importanza)" << endl;
+    cout << "Possibili leak di informazioni (diretti e indiretti) da Persona 1: [ Persona 2, Persona 3, Persona 4 ]" << endl;
+}

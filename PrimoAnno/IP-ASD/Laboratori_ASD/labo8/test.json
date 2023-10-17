@@ -1,0 +1,212 @@
+[
+
+{
+	"test_description": "CREATE a graph from text and PRINT it (this test does not check adjacency of nodes, but only their presence)",
+	"input": "b mappa.txt c",
+	"in_stdout": 
+	[
+	"Pavia:", 	"Milano:", "Piacenza:", "Voghera:", "Spezia:", "Chiavari:",
+	"Tortona:", "Serravalle:", "Masone:", "Vercelli:",
+	"Casale:", "Genova:", "Varazze:", "Finale:", "Albenga:",
+	"Savona:", "Ceva:", "Fossano:", "Alessandria:", "Asti:", "Torino:"
+	]
+},
+
+{
+	"test_description": "ADD a new VERTEX (city) to the loaded graph",
+	"input": "b mappa.txt d Carmagnola c",
+	"in_stdout":
+	[
+	"Pavia:", 	"Milano:", "Piacenza:", "Voghera:", "Spezia:", "Chiavari:",
+	"Tortona:", "Serravalle:", "Masone:", "Vercelli:",
+	"Casale:", "Genova:", "Varazze:", "Finale:", "Albenga:",
+	"Savona:", "Ceva:", "Fossano:", "Alessandria:", "Asti:", "Torino:",
+	"Pavia:", 	"Milano:", "Piacenza:", "Voghera:", "Spezia:", "Chiavari:",
+	"Tortona:", "Serravalle:", "Masone:", "Vercelli:",
+	"Casale:", "Genova:", "Varazze:", "Finale:", "Albenga:",
+	"Savona:", "Ceva:", "Fossano:", "Alessandria:", "Asti:", "Torino:", "Carmagnola"
+	]
+},
+
+{
+	"test_description": "ADD an already existing VERTEX to the loaded graph (should FAIL)",
+	"input": "b mappa.txt d Torino",
+	"in_stdout":
+	[ "Città già presente, nodo non inserito" ]
+},
+
+{
+	"test_description": "ADD a new EDGE to the loaded graph - part 1",
+	"input": "b mappa.txt e Torino Alessandria 158964 c",
+	"in_stdout_ordered":
+	[ "Alessandria", "158964" ]
+},
+
+{
+	"test_description": "ADD a new EDGE to the loaded graph - part 2",
+	"input": "b mappa.txt e Torino Alessandria 158964 c",
+	"in_stdout_ordered":
+	[ "Torino", "158964" ]
+},
+
+{
+	"test_description": "ADD a new EDGE to the loaded graph (should FAIL - already existing edge -)",
+	"input": "b mappa.txt e Torino Fossano 1",
+	"in_stdout":
+	[ "Una delle città non era presente o la strada lo era già, strada non inserita" ]
+},
+
+{
+	"test_description": "ADD a new EDGE to the loaded graph (should FAIL - non existing vertex -)",
+	"input": "b mappa.txt e Turin Fossano 1 e Torino Fusan 1",
+	"in_stdout_ordered":
+	[ "Una delle città non era presente o la strada lo era già, strada non inserita",
+	  "Una delle città non era presente o la strada lo era già, strada non inserita"
+	]
+},
+
+{
+	"test_description": "ADD a new EDGE to the loaded graph (should FAIL - creating a loop -)",
+	"input": "b mappa.txt e Torino Torino 1",
+	"in_stdout_ordered":
+	[ "Una delle città non era presente o la strada lo era già, strada non inserita" ]
+},
+
+{
+	"test_description": "Check NUM of VERTICES in the graph",
+	"input": "b mappa.txt f",
+	"in_stdout_ordered":
+	[ "21"]
+},
+
+{
+	"test_description": "Check NUM of VERTICES in the graph after ADDing VERTEX",
+	"input": "b mappa.txt d Carmagnola f",
+	"in_stdout_ordered":
+	[ "22"]
+},
+
+{
+	"test_description": "Check NUM of EDGES in the graph",
+	"input": "b mappa.txt g",
+	"in_stdout_ordered":
+	[ "23"]
+},
+
+{
+	"test_description": "Check NUM of EDGES in the graph after ADDing a new EDGE",
+	"input": "b mappa.txt e Torino Alessandria 158964 g",
+	"in_stdout_ordered":
+	[ "24"]
+},
+	
+{
+	"test_description": "Check DEGREE of NODEs in the loaded graph",
+	"input": "b mappa.txt h Pavia h Milano h Piacenza h Voghera h Spezia h Chiavari h Tortona h Serravalle h Masone h Vercelli h Casale h Genova h Varazze h Finale h Albenga h Savona h Ceva h Fossano h Alessandria h Asti h Torino",
+	"in_stdout_ordered":
+	[ "2", "2", "2", "2", "1", "2", "4", "2", "2", "1","2", "4", "2", "2", "1", "3", "2", "2", "4", "2", "2"]
+},
+
+{
+	"test_description": "Check DEGREE of not existing NODEs (should FAIL)",
+	"input": "b mappa.txt h Turin",
+	"in_stdout_ordered":
+	[ "Città non presente nella mappa"]
+},
+
+{
+	"test_description": "Check ADJACENCY of two existing NODEs",
+	"input": "b mappetta.txt i Asti Alessandria i Alessandria Asti",
+	"in_stdout_ordered":
+	[ "Le città sono adiacenti",
+	"Le città sono adiacenti"]
+},
+
+{
+	"test_description": "Check ADJACENCY of few couples of existing NODEs (all test should FAIL)",
+	"input": "b mappetta.txt i Asti Masone i Turin Alessandria i Torino Fusan i Torino Torino",
+	"in_stdout_ordered":
+	[ "Le città NON sono adiacenti",
+	  "Le città NON sono adiacenti",
+	  "Le città NON sono adiacenti",
+	  "Le città NON sono adiacenti"]
+},
+
+{
+	"test_description": "Check ADJACENCY of all adjacent pair of NODEs (and other not connected)",
+	"input": "b mappetta.txt i Asti Alessandria i Varazze Savona i Genova Varazze i Alessandria Masone i Masone Genova i Genova Serravalle i Serravalle Tortona i Tortona Alessandria i Genova Chiavari i Tortona Voghera i Asti Savona i Voghera Chiavari i Serravalle Masone",
+	"in_stdout_ordered":
+	[ "Le città sono adiacenti",
+	  "Le città sono adiacenti",
+	  "Le città sono adiacenti",
+	  "Le città sono adiacenti",
+	  "Le città sono adiacenti",
+	  "Le città sono adiacenti",
+	  "Le città sono adiacenti",
+	  "Le città sono adiacenti",
+	  "Le città sono adiacenti",
+	  "Le città sono adiacenti",
+	  "Le città NON sono adiacenti",
+	  "Le città NON sono adiacenti",
+	  "Le città NON sono adiacenti"]
+},
+
+{	
+	"test_description": "Check ADJACENCY LIST of all nodes - Part 1",
+	"input": "b mappetta.txt j Voghera j Chiavari j Tortona j Serravalle j Masone j Genova j Savona j Varazze j Alessandria j Asti",
+	"in_stdout":
+	["Tortona",
+	"Genova",
+	"Voghera",
+	"Alessandria",
+	"Serravalle",
+	"Chiavari",
+	"Masone",
+	"Varazze",
+	"Savona", 
+	"Asti"
+	]
+},
+
+{	
+	"test_description": "Check ADJACENCY LIST of all nodes - Part 2 -",
+	"input": "b mappetta.txt j Voghera j Chiavari j Tortona j Serravalle j Masone j Genova j Savona j Varazze j Alessandria j Asti",
+	"in_stdout_ordered":
+	[
+	"Tortona", 
+	"Genova",
+	"Voghera",
+	"Tortona", 
+	"Alessandria",
+	"Chiavari",
+	"Varazze",
+	"Savona",
+	"Masone",
+	"Alessandria"
+	]
+},
+
+{	"test_description": "Check ADJACENCY LIST of a non existing node (should FAIL)",
+	"input": "b mappetta.txt j Turin",
+	"in_stdout_ordered":
+	["La città non ha collegamenti o non è presente nella mappa"]
+},
+
+{
+	"test_description": "Check if PATHs are found for different pair of nodes",
+	"input": "b mappa.txt k Spezia Chiavari k Chiavari Spezia k Genova Spezia k Spezia Genova k Torino Asti k Asti Torino k Torino Fossano k Fossano Torino k Savona Ceva k Varazze Serravalle",
+	"in_stdout_ordered":
+	[
+	"Spezia Chiavari",
+	"Chiavari Spezia",
+	"Genova Chiavari Spezia",
+	"Spezia Chiavari Genova",
+	"Torino", "Asti",
+	"Asti", "Torino", 
+	"Torino", "Fossano",
+	"Fossano", "Torino",
+	"Savona", "Ceva",
+	"Varazze", "Serravalle"
+	]
+}
+]

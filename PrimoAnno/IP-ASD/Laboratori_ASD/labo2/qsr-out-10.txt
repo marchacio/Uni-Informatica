@@ -1,0 +1,12 @@
+19
+22
+27
+29
+36
+52
+81
+86
+97
+98
+
+Durata dell'esecuzione in microsecondi: 0
