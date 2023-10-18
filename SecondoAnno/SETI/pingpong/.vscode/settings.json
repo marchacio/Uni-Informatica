@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "pingpong.h": "c",
+        "socket.h": "c"
+    }
+}
