@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "pingpong.h": "c",
-        "socket.h": "c"
-    }
+        "socket.h": "c",
+        "netdb.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

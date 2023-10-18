@@ -22,18 +22,19 @@
 #include <stdio.h>
 #include "pingpong.h"
 
-double timespec_delta2milliseconds(struct timespec *last,
-				   struct timespec *previous)
+double timespec_delta2milliseconds(struct timespec *last, struct timespec *previous)
 {
 /*** This function computes the difference (last - previous)
  *** and returns the result expressed in milliseconds as a double
- ***/
+ ***/	
+	double millisecs;
 
-/*** TO BE DONE START ***/
-
+	double diff = last->tv_nsec-previous->tv_nsec;
+	millisecs = diff/1000.0;
 
 /*** TO BE DONE END ***/
 
+	return millisecs;
 }
 
 int double_cmp(const void *p1, const void *p2)
