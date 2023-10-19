@@ -1,3 +1,0 @@
-/mnt/c/Users/marco/Universita/SecondoAnno/SETI/pingpong/tcp_ping/CMakeFiles/tcp_ping.dir
-/mnt/c/Users/marco/Universita/SecondoAnno/SETI/pingpong/tcp_ping/CMakeFiles/edit_cache.dir
-/mnt/c/Users/marco/Universita/SecondoAnno/SETI/pingpong/tcp_ping/CMakeFiles/rebuild_cache.dir

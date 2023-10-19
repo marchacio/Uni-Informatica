@@ -1,1 +1,0 @@
-/usr/bin/cc -rdynamic CMakeFiles/tcp_ping.dir/tcp_ping.c.o -o tcp_ping  -lpingpong_lib 
