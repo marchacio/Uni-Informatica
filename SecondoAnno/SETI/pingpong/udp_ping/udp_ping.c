@@ -40,7 +40,7 @@ double do_ping(size_t msg_size, int msg_no, char message[msg_size], int ping_soc
 	char answer_buffer[msg_size];
 
 	//dimensione byte ricevuti e inviati 
-	ssize_t recv_bytes, sent_bytes;
+	ssize_t recv_bytes = -1, sent_bytes;
 	struct timespec send_time, recv_time;
 	
 	//RTT espresso in millisecondi
@@ -49,6 +49,7 @@ double do_ping(size_t msg_size, int msg_no, char message[msg_size], int ping_soc
 	//
 	int re_try = 0;
 
+
     /*** write msg_no at the beginning of the message buffer ***/
 
 	//dal man: fprintf() and vfprintf() write output to the given output stream.
@@ -56,55 +57,70 @@ double do_ping(size_t msg_size, int msg_no, char message[msg_size], int ping_soc
 	//Sostanzialmente concatena il secondo parametro dietro al primo.
 	sprintf(message, "%d\n", msg_no);
 
-/*** TO BE DONE END ***/
 
 	do {
 		debug(" ... sending message %d\n", msg_no);
-	/*** Store the current time in send_time ***/
 
-	//dal man: The functions clock_gettime() ... retrieve the time of the specified clock clockid
-	//Nota: CLOCK_TYPE è definito nel file pingpong.h
-	clock_gettime(CLOCK_TYPE, &send_time);
+		/*** Store the current time in send_time ***/
 
-/*** TO BE DONE END ***/
-
-	/*** Send the message through the socket (non blocking mode) ***/
-
-	//invia i dati e in caso di errore termina l'esecuzione
-	sent_bytes = send(ping_socket, message, msg_size, 0);
-	if(sent_bytes != msg_size)
-		fail_errno("Errore nell'invio dei dati");
-
-/*** TO BE DONE END ***/
-
-	/*** Receive answer through the socket (non blocking mode, with timeout) ***/
-	recv_bytes = recv(ping_socket, answer_buffer, sizeof(answer_buffer), 0);
+		//dal man: The functions clock_gettime() ... retrieve the time of the specified clock clockid
+		//Nota: CLOCK_TYPE è definito nel file pingpong.h
+		clock_gettime(CLOCK_TYPE, &send_time);
 
 
-/*** TO BE DONE END ***/
+		/*** Send the message through the socket (non blocking mode) ***/
 
-	/*** Store the current time in recv_time ***/
-	clock_gettime(CLOCK_TYPE, &recv_time);
+		//invia i dati e in caso di errore termina l'esecuzione
+		sent_bytes = send(ping_socket, message, msg_size, 0);
+		if(sent_bytes != msg_size)
+			fail_errno("Errore nell'invio dei dati");
+		
 
-/*** TO BE DONE END ***/
+		/*** Receive answer through the socket (non blocking mode, with timeout) ***/
+	
+		//PREMESSA: Dato che il timeout è espresso in double in millisecondi, moltiplicalo per 100 per avere i microsecondi.
+		//es: timeout = UDP_TIMEOUT = 3000.0 --> timeout*100 = 3000000 microsecondi.
+		//Questa conversione è necessaria in quanto la funzione usleep ha come parametro un int che rappresenta
+		//i microsecondi.
+		//
+		//Grazie a questo ciclo, per [timeout/100] secondi proviamo a leggere la risposta del server, dopodiche
+		//esce dal ciclo.
+		//La variabile costante RIDUZIONE serve per ridurre i microsecondi rimasti progressivamente, in modo tale
+		//da "far avanzare" il cronometro dei [timeout/100] secondi.
+		//Più il numero è alto, piu la ricezione sarà lenta ma con migliori prestazioni.
+		int millisecLeft = (int)timeout*100;
+		const int RIDUZIONE = 5; //ogni 5 millisecondi, riprova
+
+		while(recv_bytes < 0 && millisecLeft > 0) {
+			recv_bytes = recv(ping_socket, answer_buffer, sizeof(answer_buffer), 0);
+			usleep(RIDUZIONE); //aspetta 5 millisecondi
+			millisecLeft -= RIDUZIONE; //decrementa il timer
+
+			//ricomincia il ciclo fino a quando o non hai una risposta o non è scaduto il tempo.
+		}
+		
+
+		/*** Store the current time in recv_time ***/
+		clock_gettime(CLOCK_TYPE, &recv_time);
+		
 
 		roundtrip_time_ms = timespec_delta2milliseconds(&recv_time, &send_time);
 
-		while ( recv_bytes < 0 && (recv_errno == EAGAIN || recv_errno == EWOULDBLOCK)
-		            && roundtrip_time_ms < timeout ) {
+		while ( recv_bytes < 0 && (recv_errno == EAGAIN || recv_errno == EWOULDBLOCK) && roundtrip_time_ms < timeout ) {
 			recv_bytes = recv(ping_socket, answer_buffer, sizeof(answer_buffer), 0);
-                        recv_errno = errno;
-                        if ( recv_bytes < 0 && errno != EAGAIN && errno != EWOULDBLOCK )
-			        fail_errno("UDP ping could not recv from UDP socket");
-                        
-		        if (clock_gettime(CLOCK_TYPE, &recv_time))
-			    fail_errno("Cannot get receive-time");
+			recv_errno = errno;
+
+			if ( recv_bytes < 0 && errno != EAGAIN && errno != EWOULDBLOCK )
+				fail_errno("UDP ping could not recv from UDP socket");
+					
+			if (clock_gettime(CLOCK_TYPE, &recv_time))
+				fail_errno("Cannot get receive-time");
+
 			roundtrip_time_ms = timespec_delta2milliseconds(&recv_time, &send_time);
-                        sscanf(answer_buffer,"%ld %ld, %ld %ld\n",
-                                                &(recv_time.tv_sec), &(recv_time.tv_nsec),
-                                                &(send_time.tv_sec), &(send_time.tv_nsec));
-	                roundtrip_time_ms -= timespec_delta2milliseconds(&send_time, &recv_time);
+			sscanf(answer_buffer,"%ld %ld, %ld %ld\n", &(recv_time.tv_sec), &(recv_time.tv_nsec), &(send_time.tv_sec), &(send_time.tv_nsec));
+			roundtrip_time_ms -= timespec_delta2milliseconds(&send_time, &recv_time);
 		}
+		
 		if (recv_bytes < sent_bytes) {	/*time-out elapsed: packet was lost */
 			lost_count++;
 			if (recv_bytes < 0)
@@ -122,7 +138,6 @@ double do_ping(size_t msg_size, int msg_no, char message[msg_size], int ping_soc
 }
 
 
-
 int prepare_udp_socket(char *pong_addr, char *pong_port)
 {
 	struct addrinfo gai_hints, *pong_addrinfo = NULL;
@@ -138,48 +153,40 @@ int prepare_udp_socket(char *pong_addr, char *pong_port)
 	gai_hints.ai_protocol = 0;
 	gai_hints.ai_flags = 0;
 
-/*** TO BE DONE END ***/
-
 	if ((ping_socket = socket(gai_hints.ai_family, gai_hints.ai_socktype, gai_hints.ai_protocol)) == -1)
 		fail_errno("UDP Ping could not get socket");
 
     /*** change ping_socket behavior to NONBLOCKing using fcntl() ***/
-	
-	// Save the existing flags
-	int saved_flags = fcntl(ping_socket, F_GETFL);
-	// Set the new flags with O_NONBLOCK masked out
-	fcntl(ping_socket, F_SETFL, saved_flags & ~O_NONBLOCK);
-	
-/*** TO BE DONE END ***/
+
+	//cambia il socket in non bloccante:
+	int result = fcntl(ping_socket, F_SETFL, O_NONBLOCK);
+	if(result)
+		fail_errno("Errore nel fcntl set");
+
 
     /*** call getaddrinfo() in order to get Pong Server address in binary form ***/
 	gai_rv = getaddrinfo(pong_addr, pong_port, &gai_hints, &pong_addrinfo);
 	
 	//getaddrinfo ritorna 0 se tutto è andato bene, altrimenti un codice di errore;
 	//controllo:
-	if(gai_rv != 0)
+	if(gai_rv)
 		fail_errno("Errore nel getaddrinfo");
 
-/*** TO BE DONE END ***/
 
-//#ifdef DEBUG
-	//{
-		char ipv4str[INET_ADDRSTRLEN];
-		const char * const cp = inet_ntop(AF_INET, &(((struct sockaddr_in *)(pong_addrinfo-> ai_addr))->sin_addr), ipv4str, INET_ADDRSTRLEN);
-		if (cp == NULL)
-			printf(" ... inet_ntop() error!\n");
-		else
-			printf(" ... about to connect socket %d to IP address %s, port %hu\n",
-			     ping_socket, cp, ntohs(((struct sockaddr_in *)(pong_addrinfo->ai_addr))->sin_port));
-	//}
-//#endif //TODO rimuovi i commenti da ifdef e endif
+#ifdef DEBUG
+	char ipv4str[INET_ADDRSTRLEN];
+	const char * const cp = inet_ntop(AF_INET, &(((struct sockaddr_in *)(pong_addrinfo-> ai_addr))->sin_addr), ipv4str, INET_ADDRSTRLEN);
+	if (cp == NULL)
+		printf(" ... inet_ntop() error!\n");
+	else
+		printf(" ... about to connect socket %d to IP address %s, port %hu\n",
+				ping_socket, cp, ntohs(((struct sockaddr_in *)(pong_addrinfo->ai_addr))->sin_port));
+#endif
 
     /*** connect the ping_socket UDP socket with the server ***/
 	int connectValue = connect(ping_socket, pong_addrinfo->ai_addr, pong_addrinfo->ai_addrlen);	
-	if(connectValue != 0)
+	if(connectValue)
 		fail_errno("Errore nel connect");
-
-/*** TO BE DONE END ***/
 
 	freeaddrinfo(pong_addrinfo);
 	return ping_socket;
@@ -234,7 +241,6 @@ int main(int argc, char *argv[])
 	if(gai_rv != 0)
 		fail_errno("Errore nel getaddrinfo");
 
-/*** TO BE DONE END ***/
 
     /*** Print address of the Pong server before trying to connect ***/
 	ipv4 = (struct sockaddr_in *)server_addrinfo->ai_addr;
@@ -250,8 +256,6 @@ int main(int argc, char *argv[])
 		fail_errno("Errore nel connect");
 
 
-/*** TO BE DONE END ***/
-
 	freeaddrinfo(server_addrinfo);
 	printf(" ... connected to Pong server: asking for %d repetitions of %d _bytes UDP messages\n", norep, msg_size);
 	sprintf(request, "UDP %d %d\n", msg_size, norep);
@@ -261,8 +265,6 @@ int main(int argc, char *argv[])
 	if(writeRes > msg_size)
 		fail_errno("Errore nella write");
 
-
-/*** TO BE DONE END ***/
 
 	nr = read(ask_socket, answer, sizeof(answer));
 	if (nr < 0)
@@ -276,7 +278,6 @@ int main(int argc, char *argv[])
 	if(!strcmp(answer, "OK"))
 		fail_errno("Errore nella risposta dal server");
 
-/*** TO BE DONE END ***/
 
     /*** else ***/
 	sscanf(answer + 3, "%d\n", &pong_port);
@@ -287,22 +288,20 @@ int main(int argc, char *argv[])
 
 	ping_socket = prepare_udp_socket(argv[1], answer);
 
-	{
-		char message[msg_size];
-		memset(&message, 0, (size_t)msg_size);
-		double ping_times[norep];
-		struct timespec zero, resolution;
-		int repeat;
-		for (repeat = 0; repeat < norep; repeat++) {
-			ping_times[repeat] = do_ping((size_t)msg_size, repeat + 1, message, ping_socket, UDP_TIMEOUT);
-			printf("Round trip time was %6.3lf milliseconds in repetition %d\n", ping_times[repeat], repeat + 1);
-		}
-		memset((void *)(&zero), 0, sizeof(struct timespec));
-		if (clock_getres(CLOCK_TYPE, &resolution) != 0)
-			fail_errno("UDP Ping could not get timer resolution");
-		print_statistics(stdout, "UDP Ping: ", norep, ping_times, msg_size, timespec_delta2milliseconds(&resolution, &zero));
-
+	char message[msg_size];
+	memset(&message, 0, (size_t)msg_size);
+	double ping_times[norep];
+	struct timespec zero, resolution;
+	int repeat;
+	for (repeat = 0; repeat < norep; repeat++) {
+		ping_times[repeat] = do_ping((size_t)msg_size, repeat + 1, message, ping_socket, UDP_TIMEOUT);
+		printf("Round trip time was %6.3lf milliseconds in repetition %d\n", ping_times[repeat], repeat + 1);
 	}
+	memset((void *)(&zero), 0, sizeof(struct timespec));
+	if (clock_getres(CLOCK_TYPE, &resolution) != 0)
+		fail_errno("UDP Ping could not get timer resolution");
+	print_statistics(stdout, "UDP Ping: ", norep, ping_times, msg_size, timespec_delta2milliseconds(&resolution, &zero));
+
 
 	close(ping_socket);
 	exit(EXIT_SUCCESS);
