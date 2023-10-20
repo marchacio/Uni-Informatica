@@ -40,15 +40,14 @@ double do_ping(size_t msg_size, int msg_no, char message[msg_size], int tcp_sock
 
     /*** write msg_no at the beginning of the message buffer ***/
 	
-	//dal man: 
-	//fprintf() and vfprintf() write output to the given output stream.
+	//dal man: fprintf() and vfprintf() write output to the given output stream.
 	//
 	//Sostanzialmente concatena il secondo parametro dietro al primo.
 	sprintf(message, "%d\n", msg_no);
 
     /*** Store the current time in send_time ***/
-	//dal man:
-	//The functions clock_gettime() ... retrieve the time of the specified clock clockid
+	
+	//dal man: The functions clock_gettime() ... retrieve the time of the specified clock clockid
 	//Nota: CLOCK_TYPE è definito nel file pingpong.h
 	clock_gettime(CLOCK_TYPE, &send_time);
 
@@ -79,7 +78,7 @@ double do_ping(size_t msg_size, int msg_no, char message[msg_size], int tcp_sock
 
 int main(int argc, char **argv)
 {
-	struct addrinfo *gai_hints, *server_addrinfo;
+	struct addrinfo gai_hints, *server_addrinfo;
 	int msgsz, norep; //MessageSize and Number(of)Repetition
 	int gai_rv; //GetAddressInfo_ReturnValue
 	char ipstr[INET_ADDRSTRLEN];
@@ -101,19 +100,17 @@ int main(int argc, char **argv)
     /*** Initialize hints in order to specify socket options ***/
 	memset(&gai_hints, 0, sizeof gai_hints);
 
-	//inizializza gai_hints allocando la sua memoria
-	gai_hints = malloc(sizeof(struct addrinfo));
-
 	//dal man di getaddrinfo() (https://man7.org/linux/man-pages/man3/getaddrinfo.3.html):
-	gai_hints->ai_family = AF_INET;
-	gai_hints->ai_socktype = SOCK_STREAM;
-	gai_hints->ai_protocol = 0;
-	gai_hints->ai_flags = 0;
-	gai_hints->ai_addr = NULL;
-	gai_hints->ai_next = NULL;
+	gai_hints.ai_family = AF_INET;
+	gai_hints.ai_socktype = SOCK_STREAM;
+	gai_hints.ai_protocol = 0;
+	gai_hints.ai_flags = 0;
 
     /*** call getaddrinfo() in order to get Pong Server address in binary form ***/
-	gai_rv = getaddrinfo(argv[1], argv[2], gai_hints, &server_addrinfo);
+	gai_rv = getaddrinfo(argv[1], argv[2], &gai_hints, &server_addrinfo);
+	
+	//getaddrinfo ritorna 0 se tutto è andato bene, altrimenti un codice di errore;
+	//controllo:
 	if(gai_rv != 0)
 		fail_errno("Errore nel getaddrinfo");
 

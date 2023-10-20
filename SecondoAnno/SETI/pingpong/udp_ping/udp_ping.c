@@ -19,8 +19,9 @@
  * (at your option) any later version.
  */
 
-#include "pingpong.h"
-
+#include "../pingpong_lib/pingpong.h"
+#include "../pingpong_lib/statistics.c"
+#include "../pingpong_lib/fail.c"
 
 /*
 * This function sends and waits for a reply on a socket.
@@ -29,42 +30,61 @@
 */
 double do_ping(size_t msg_size, int msg_no, char message[msg_size], int ping_socket, double timeout)
 {
-	int lost_count = 0, recv_errno;
+	//contatore pacchetti persi
+	int lost_count = 0;
+	
+	//numero errore in ricezione
+	int recv_errno;
+
+	//buffer di risposta
 	char answer_buffer[msg_size];
+
+	//dimensione byte ricevuti e inviati 
 	ssize_t recv_bytes, sent_bytes;
 	struct timespec send_time, recv_time;
+	
+	//RTT espresso in millisecondi
 	double roundtrip_time_ms;
+
+	//
 	int re_try = 0;
 
     /*** write msg_no at the beginning of the message buffer ***/
-/*** TO BE DONE START ***/
 
+	//dal man: fprintf() and vfprintf() write output to the given output stream.
+	//
+	//Sostanzialmente concatena il secondo parametro dietro al primo.
+	sprintf(message, "%d\n", msg_no);
 
 /*** TO BE DONE END ***/
 
 	do {
 		debug(" ... sending message %d\n", msg_no);
 	/*** Store the current time in send_time ***/
-/*** TO BE DONE START ***/
 
+	//dal man: The functions clock_gettime() ... retrieve the time of the specified clock clockid
+	//Nota: CLOCK_TYPE è definito nel file pingpong.h
+	clock_gettime(CLOCK_TYPE, &send_time);
 
 /*** TO BE DONE END ***/
 
 	/*** Send the message through the socket (non blocking mode) ***/
-/*** TO BE DONE START ***/
 
+	//invia i dati e in caso di errore termina l'esecuzione
+	sent_bytes = send(ping_socket, message, msg_size, 0);
+	if(sent_bytes != msg_size)
+		fail_errno("Errore nell'invio dei dati");
 
 /*** TO BE DONE END ***/
 
 	/*** Receive answer through the socket (non blocking mode, with timeout) ***/
-/*** TO BE DONE START ***/
+	recv_bytes = recv(ping_socket, answer_buffer, sizeof(answer_buffer), 0);
 
 
 /*** TO BE DONE END ***/
 
 	/*** Store the current time in recv_time ***/
-/*** TO BE DONE START ***/
-
+	clock_gettime(CLOCK_TYPE, &recv_time);
 
 /*** TO BE DONE END ***/
 
@@ -107,12 +127,16 @@ int prepare_udp_socket(char *pong_addr, char *pong_port)
 {
 	struct addrinfo gai_hints, *pong_addrinfo = NULL;
 	int ping_socket;
-	int gai_rv;
+	int gai_rv; //GetAddressInfo_ReturnValue
 
     /*** Specify the UDP sockets' options ***/
 	memset(&gai_hints, 0, sizeof gai_hints);
-/*** TO BE DONE START ***/
 
+	//dal man di getaddrinfo() (https://man7.org/linux/man-pages/man3/getaddrinfo.3.html):
+	gai_hints.ai_family = AF_INET;
+	gai_hints.ai_socktype = SOCK_DGRAM;
+	gai_hints.ai_protocol = 0;
+	gai_hints.ai_flags = 0;
 
 /*** TO BE DONE END ***/
 
@@ -120,19 +144,26 @@ int prepare_udp_socket(char *pong_addr, char *pong_port)
 		fail_errno("UDP Ping could not get socket");
 
     /*** change ping_socket behavior to NONBLOCKing using fcntl() ***/
-/*** TO BE DONE START ***/
 	
-
+	// Save the existing flags
+	int saved_flags = fcntl(ping_socket, F_GETFL);
+	// Set the new flags with O_NONBLOCK masked out
+	fcntl(ping_socket, F_SETFL, saved_flags & ~O_NONBLOCK);
+	
 /*** TO BE DONE END ***/
 
     /*** call getaddrinfo() in order to get Pong Server address in binary form ***/
-/*** TO BE DONE START ***/
-
+	gai_rv = getaddrinfo(pong_addr, pong_port, &gai_hints, &pong_addrinfo);
+	
+	//getaddrinfo ritorna 0 se tutto è andato bene, altrimenti un codice di errore;
+	//controllo:
+	if(gai_rv != 0)
+		fail_errno("Errore nel getaddrinfo");
 
 /*** TO BE DONE END ***/
 
-#ifdef DEBUG
-	{
+//#ifdef DEBUG
+	//{
 		char ipv4str[INET_ADDRSTRLEN];
 		const char * const cp = inet_ntop(AF_INET, &(((struct sockaddr_in *)(pong_addrinfo-> ai_addr))->sin_addr), ipv4str, INET_ADDRSTRLEN);
 		if (cp == NULL)
@@ -140,12 +171,13 @@ int prepare_udp_socket(char *pong_addr, char *pong_port)
 		else
 			printf(" ... about to connect socket %d to IP address %s, port %hu\n",
 			     ping_socket, cp, ntohs(((struct sockaddr_in *)(pong_addrinfo->ai_addr))->sin_port));
-	}
-#endif
+	//}
+//#endif //TODO rimuovi i commenti da ifdef e endif
 
     /*** connect the ping_socket UDP socket with the server ***/
-/*** TO BE DONE START ***/
-
+	int connectValue = connect(ping_socket, pong_addrinfo->ai_addr, pong_addrinfo->ai_addrlen);	
+	if(connectValue != 0)
+		fail_errno("Errore nel connect");
 
 /*** TO BE DONE END ***/
 
@@ -153,18 +185,26 @@ int prepare_udp_socket(char *pong_addr, char *pong_port)
 	return ping_socket;
 }
 
-
-
 int main(int argc, char *argv[])
 {
-	struct addrinfo gai_hints, *server_addrinfo;
-	int ping_socket, ask_socket;;
+	struct addrinfo gai_hints, *server_addrinfo; //getaddressinfo_hinst
+	int ping_socket; 
+
+	//socket del udp ottenuto tramite tcp.
+	int ask_socket;
+
+	//message size e numero ripetizioni
 	int msg_size, norep;
-	int gai_rv;
+
+	//GetAddressInfo_ReturnValue
+	int gai_rv; 
+
 	char ipstr[INET_ADDRSTRLEN];
 	struct sockaddr_in *ipv4;
 	char request[40], answer[10];
 	ssize_t nr;
+
+	//porta server tcp
 	int pong_port;
 
 	if (argc < 4)
@@ -181,14 +221,18 @@ int main(int argc, char *argv[])
 
     /*** Specify TCP socket options ***/
 	memset(&gai_hints, 0, sizeof gai_hints);
-/*** TO BE DONE START ***/
 
+	//dal man di getaddrinfo() (https://man7.org/linux/man-pages/man3/getaddrinfo.3.html):
+	gai_hints.ai_family = AF_INET;
+	gai_hints.ai_socktype = SOCK_STREAM;
+	gai_hints.ai_protocol = 0;
+	gai_hints.ai_flags = 0;
 
-/*** TO BE DONE END ***/
 
     /*** call getaddrinfo() in order to get Pong Server address in binary form ***/
-/*** TO BE DONE START ***/
-
+	gai_rv = getaddrinfo(argv[1], argv[2], &gai_hints, &server_addrinfo);
+	if(gai_rv != 0)
+		fail_errno("Errore nel getaddrinfo");
 
 /*** TO BE DONE END ***/
 
@@ -196,8 +240,14 @@ int main(int argc, char *argv[])
 	ipv4 = (struct sockaddr_in *)server_addrinfo->ai_addr;
 	printf("UDP Ping trying to connect to server %s (%s) on TCP port %s\n", argv[1], inet_ntop(AF_INET, &ipv4->sin_addr, ipstr, INET_ADDRSTRLEN), argv[2]);
 
+
     /*** create a new TCP socket and connect it with the server ***/
-/*** TO BE DONE START ***/
+	ask_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+	//connettiti al server
+	int connectValue = connect(ask_socket, server_addrinfo->ai_addr, server_addrinfo->ai_addrlen);	
+	if(connectValue != 0)
+		fail_errno("Errore nel connect");
 
 
 /*** TO BE DONE END ***/
@@ -207,7 +257,9 @@ int main(int argc, char *argv[])
 	sprintf(request, "UDP %d %d\n", msg_size, norep);
 
     /*** Write the request on the TCP socket ***/
-/** TO BE DONE START ***/
+	int writeRes = write(ask_socket, request, strlen(request));
+	if(writeRes > msg_size)
+		fail_errno("Errore nella write");
 
 
 /*** TO BE DONE END ***/
@@ -220,8 +272,9 @@ int main(int argc, char *argv[])
 	answer[nr] = 0;
 
     /*** Check if the answer is OK, and fail if it is not ***/
-/*** TO BE DONE START ***/
-
+	//strcmp compara due stringhe e ritorna 1 se sono uguali, 0 se diverse
+	if(!strcmp(answer, "OK"))
+		fail_errno("Errore nella risposta dal server");
 
 /*** TO BE DONE END ***/
 

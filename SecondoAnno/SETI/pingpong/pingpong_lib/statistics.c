@@ -32,8 +32,6 @@ double timespec_delta2milliseconds(struct timespec *last, struct timespec *previ
 	double diff = last->tv_nsec-previous->tv_nsec;
 	millisecs = diff/1000.0;
 
-/*** TO BE DONE END ***/
-
 	return millisecs;
 }
 
