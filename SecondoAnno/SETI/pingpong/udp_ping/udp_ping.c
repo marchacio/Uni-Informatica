@@ -89,11 +89,11 @@ double do_ping(size_t msg_size, int msg_no, char message[msg_size], int ping_soc
 		//da "far avanzare" il cronometro dei [timeout/100] secondi.
 		//Più il numero è alto, piu la ricezione sarà lenta ma con migliori prestazioni.
 		int millisecLeft = (int)timeout*100;
-		const int RIDUZIONE = 5; //ogni 5 millisecondi, riprova
+		const int RIDUZIONE = 50; //ogni RIDUZIONE millisecondi, riprova
 
 		while(recv_bytes < 0 && millisecLeft > 0) {
 			recv_bytes = recv(ping_socket, answer_buffer, sizeof(answer_buffer), 0);
-			usleep(RIDUZIONE); //aspetta 5 millisecondi
+			usleep(RIDUZIONE); //aspetta RIDUZIONE millisecondi
 			millisecLeft -= RIDUZIONE; //decrementa il timer
 
 			//ricomincia il ciclo fino a quando o non hai una risposta o non è scaduto il tempo.
