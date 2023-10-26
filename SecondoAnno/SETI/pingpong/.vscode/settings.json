@@ -2,7 +2,9 @@
     "files.associations": {
         "pingpong.h": "c",
         "socket.h": "c",
-        "netdb.h": "c"
+        "netdb.h": "c",
+        "cstdio": "c",
+        "signal.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

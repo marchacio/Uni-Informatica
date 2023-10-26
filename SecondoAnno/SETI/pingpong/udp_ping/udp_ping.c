@@ -19,9 +19,9 @@
  * (at your option) any later version.
  */
 
+///Per compilare (dalla cartella superiore):
+///	 gcc -Wall tcp_ping/udp_ping.c pingpong_lib/statistics.c pingpong_lib/fail.c
 #include "../pingpong_lib/pingpong.h"
-#include "../pingpong_lib/statistics.c"
-#include "../pingpong_lib/fail.c"
 
 /*
 * This function sends and waits for a reply on a socket.

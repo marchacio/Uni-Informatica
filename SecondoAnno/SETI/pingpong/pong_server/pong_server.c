@@ -23,7 +23,10 @@
  */
 
 #include <signal.h>
-#include "pingpong.h"
+
+//Per compilare:
+// gcc -Wall pong_server/pong_server.c pingpong_lib/*.c
+#include "../pingpong_lib/pingpong.h"
 
 void sigchld_handler(int signum)
 {
@@ -36,7 +39,7 @@ void tcp_pong(int message_no, size_t message_size, FILE *in_stream, int out_sock
 {
 	char buffer[message_size], *cp;
 	int n_msg, n_c;
-        struct timespec time2, time3;
+	struct timespec time2, time3;
 
 	for (n_msg = 1; n_msg <= message_no; ++n_msg) {
 		int seq = 0;
@@ -48,9 +51,11 @@ void tcp_pong(int message_no, size_t message_size, FILE *in_stream, int out_sock
 			*cp = (char)cc;
 		}
 
-                /*** get time-stamp time2 from the clock ***/
-/*** TO BE DONE START ***/
+		/*** get time-stamp time2 from the clock ***/
 
+		//dal man: The functions clock_gettime() ... retrieve the time of the specified clock clockid
+		//Nota: CLOCK_TYPE è definito nel file pingpong.h
+		clock_gettime(CLOCK_TYPE, &time2);
 
 /*** TO BE DONE END ***/
 
@@ -62,13 +67,14 @@ void tcp_pong(int message_no, size_t message_size, FILE *in_stream, int out_sock
 			fail("TCP Pong received wrong message sequence number");
 
                 /*** get time-stamp time3 from the clock ***/
-/*** TO BE DONE START ***/
 
+		//dal man: The functions clock_gettime() ... retrieve the time of the specified clock clockid
+		//Nota: CLOCK_TYPE è definito nel file pingpong.h
+		clock_gettime(CLOCK_TYPE, &time3);
 
 /*** TO BE DONE END ***/
 
-                sprintf(buffer,"%ld %ld, %ld %ld\n", (long)time2.tv_sec, time2.tv_nsec,
-                                                     (long)time3.tv_sec, time3.tv_nsec);
+		sprintf(buffer,"%ld %ld, %ld %ld\n", (long)time2.tv_sec, time2.tv_nsec, (long)time3.tv_sec, time3.tv_nsec);
 		if (blocking_write_all(out_socket, buffer, message_size) != message_size)
 			fail("TCP Pong failed sending data back");
 	}
@@ -90,9 +96,11 @@ void udp_pong(int dgrams_no, int dgram_sz, int pong_socket)
 			fail_errno("UDP Pong recv failed");
 
 
-                /*** get time-stamp time2 from the clock ***/
-/*** TO BE DONE START ***/
+		/*** get time-stamp time2 from the clock ***/
 
+		//dal man: The functions clock_gettime() ... retrieve the time of the specified clock clockid
+		//Nota: CLOCK_TYPE è definito nel file pingpong.h
+		clock_gettime(CLOCK_TYPE, &time2);
 
 /*** TO BE DONE END ***/
 
@@ -125,9 +133,11 @@ void udp_pong(int dgrams_no, int dgram_sz, int pong_socket)
 				fail("UDP Pong maximum resend count exceeded");
 		}
 
-                /*** get time-stamp time3 from the clock ***/
-/*** TO BE DONE START ***/
+		/*** get time-stamp time3 from the clock ***/
 
+		//dal man: The functions clock_gettime() ... retrieve the time of the specified clock clockid
+		//Nota: CLOCK_TYPE è definito nel file pingpong.h
+		clock_gettime(CLOCK_TYPE, &time3);
 
 /*** TO BE DONE END ***/
 
@@ -146,7 +156,9 @@ void udp_pong(int dgrams_no, int dgram_sz, int pong_socket)
 int open_udp_socket(int *pong_port)
 {
 	struct addrinfo gai_hints, *pong_addrinfo;
-	int udp_socket, port_number, gai_rv, bind_rv;
+	int udp_socket, port_number, 
+		gai_rv, //GetAddressInfo_ReturnValue 
+		bind_rv;//bind_ReturnValue
 
 	memset(&gai_hints, 0, sizeof gai_hints);
 	gai_hints.ai_family = AF_INET;
@@ -161,10 +173,24 @@ int open_udp_socket(int *pong_port)
 		char port_number_as_str[6];
 		sprintf(port_number_as_str, "%d", port_number);
 
-                /*** create DGRAM socket, call getaddrinfo() to set port number, and bind() ***/
-/*** TO BE DONE START ***/
+		/*** create DGRAM socket, call getaddrinfo() to set port number, and bind() ***/
 
-
+		if((udp_socket = socket(gai_hints.ai_family, gai_hints.ai_socktype, gai_hints.ai_protocol)) == -1)
+			fail_errno("UDP Ping could not get socket");
+		
+		gai_rv = getaddrinfo(NULL, port_number_as_str, &gai_hints, &pong_addrinfo);
+		//getaddrinfo ritorna 0 se tutto è andato bene, altrimenti un codice di errore:
+		if(!gai_rv)
+			fail_errno("Errore nel getaddrinfo");
+		
+		//DAL MAN:
+		// bind() assigns the address specified by addr to the socket referred to by the file descriptor sockfd
+		bind_rv = bind(udp_socket, pong_addrinfo->ai_addr, pong_addrinfo->ai_addrlen);
+		if(!bind_rv)
+			fail_errno("Errore nel bind"); 
+			
+		*pong_port = port_number;
+		return udp_socket;
 /*** TO BE DONE END ***/
 
 		if (errno != EADDRINUSE) 
@@ -287,8 +313,41 @@ void server_loop(int server_socket) {
 
 /*** check for possible accept() errors, and if connection was correctly
      establised fork() and have the child process call serve_client() ***/
-/*** TO BE DONE START ***/
 
+		/*DAL MAN:
+			- RETURN VALUE
+				On success, these system calls return a file descriptor for the accepted socket (a nonnegative integer).
+				On error, -1 is returned, errno is set appropriately, and addrlen is left unchanged
+			------------------------------------------------------------------------------------
+
+			Il codice seguente esegue un loop finche request_socket non è un socket != -1;
+			Infatti, durante l'esecuzione del loop principale (il for all'inizio della funzione), può capitare che la 
+			syscall accept ritorni un errore di tipo EINTR, ovvero Interrupted-System-Call.
+
+			Per risolvere basta ri-eseguire il comando fino a quando il valore di ritorno non è accettabile.
+
+			In caso di errore diverso da EINTR, ferma l'esecuzione perche non è un errore trattato.
+		*/
+		again:
+		if(request_socket == -1 && errno == EINTR){
+			request_socket = accept(server_socket, (struct sockaddr *)&client_addr, &addr_size);
+			goto again;
+
+		} else if(request_socket == -1 && errno != EINTR) {
+			fail_errno("Errore nella accept");
+		}
+			
+		//Forka il processo genitore
+		pid = fork();
+
+		if(pid < 0) //controlla che il fork non abbia errori
+			fail_errno("Errore nel fork");
+
+		if (pid == 0)  {
+			//esegui sul processo figlio
+			serve_client(request_socket, &client_addr);
+		}
+			
 
 /*** TO BE DONE END ***/
 
@@ -310,11 +369,32 @@ int main(int argc, char **argv)
 	gai_hints.ai_flags = AI_PASSIVE;
 	gai_hints.ai_protocol = IPPROTO_TCP;
 
-        /*** call getaddrinfo() to setup port number and server address, ***
-         *** create STREAM socket, bind() and listen()                   ***/
-/*** TO BE DONE START ***/
+	/*** call getaddrinfo() to setup port number and server address, ***
+	 *** create STREAM socket, bind() and listen()                   ***/
 
+	gai_rv = getaddrinfo(NULL, argv[1], &gai_hints, &server_addrinfo);
+	//getaddrinfo ritorna 0 se tutto è andato bene, altrimenti un codice di errore:
+	if(gai_rv)
+		fail_errno("Errore nel getaddrinfo (main)");
 
+	if((server_socket = socket(server_addrinfo->ai_family, server_addrinfo->ai_socktype, server_addrinfo->ai_protocol)) == -1)
+		fail_errno("UDP Ping could not get socket (main)");
+
+	//DAL MAN:
+	// bind() assigns the address specified by addr to the socket referred to by the file descriptor sockfd
+	int bind_rv = bind(server_socket, server_addrinfo->ai_addr, server_addrinfo->ai_addrlen);
+	if(bind_rv)
+		fail_errno("Errore nel bind (main)"); 
+
+	//DAL MAN:
+	// listen() marks the socket referred to by sockfd as a passive socket, that is, as a socket that 
+	// will be used to accept incoming connection requests using accept.
+	//
+	// On success, zero is returned.  On error, -1 is returned, and errno is set appropriately
+	int listen_rv = listen(server_socket, LISTENBACKLOG);
+	if(listen_rv)
+		fail_errno("Errore nella listen (main)"); 
+	
 
 /*** TO BE DONE END ***/
 
