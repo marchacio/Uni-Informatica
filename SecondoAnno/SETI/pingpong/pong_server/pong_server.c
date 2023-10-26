@@ -180,13 +180,13 @@ int open_udp_socket(int *pong_port)
 		
 		gai_rv = getaddrinfo(NULL, port_number_as_str, &gai_hints, &pong_addrinfo);
 		//getaddrinfo ritorna 0 se tutto è andato bene, altrimenti un codice di errore:
-		if(!gai_rv)
+		if(gai_rv)
 			fail_errno("Errore nel getaddrinfo");
 		
 		//DAL MAN:
 		// bind() assigns the address specified by addr to the socket referred to by the file descriptor sockfd
 		bind_rv = bind(udp_socket, pong_addrinfo->ai_addr, pong_addrinfo->ai_addrlen);
-		if(!bind_rv)
+		if(bind_rv)
 			fail_errno("Errore nel bind"); 
 			
 		*pong_port = port_number;
@@ -323,6 +323,7 @@ void server_loop(int server_socket) {
 			Il codice seguente esegue un loop finche request_socket non è un socket != -1;
 			Infatti, durante l'esecuzione del loop principale (il for all'inizio della funzione), può capitare che la 
 			syscall accept ritorni un errore di tipo EINTR, ovvero Interrupted-System-Call.
+			Per altre info: https://unix.stackexchange.com/questions/509375/what-is-interrupted-system-call
 
 			Per risolvere basta ri-eseguire il comando fino a quando il valore di ritorno non è accettabile.
 
