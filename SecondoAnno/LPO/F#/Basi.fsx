@@ -55,6 +55,26 @@ let ls2 = [1;2;3];; // [1;2;3]
 //mentre @ è come se fosse un "append(ls)" con ls=lista;
 //Operano su tipi diversi!
 
+(*
+    Funzioni per le liste:
+        - List.length : ’a list -> int
+            returns the length (number of elements) of the given list
+        - List.item : int -> ’a list -> ’a
+            returns the n-th element of the given list. The head of the list is at position 0
+        - List.init : int -> (int -> ’a)-> ’a list
+            List.init len f is [f 0; f 1; ...; f (len-1)]
+
+    Esempi:
+    
+    > let ls = List.init 10000 (fun x->x+1);;
+        val ls : int list = [1; 2; 3; ... ]
+    > List.length ls;;
+        val it: int = 10000
+    > List.item 0 ls;;
+        val it: int = 1
+    > List.item 9999 ls;;
+        val it: int = 10000
+*)
 
 //----------------------------
 //------------TIPI------------
@@ -67,3 +87,67 @@ let ls2 = [1;2;3];; // [1;2;3]
 //true has type bool
 
  
+//----------------------------------------
+//------------PATTERN MATCHING------------
+//----------------------------------------
+//è sostanzialmente uno switch negli altri linguaggi di programmazione:
+///Questa funzione [myNot] prende b e se b "matcha" con false, ritorna true (1);
+/// Prende b e se b "matcha" con true, ritorna false (2)
+let myNot b = 
+    match b with 
+    | false -> true         //(1)
+    | true -> false         //(2)
+
+//Altri esempi un po piu complessi:
+
+(* functions defined by two cases;
+
+In questo caso c'è la definizione di una variable t che rappresenta
+la "parte destra" della lista.
+L'identificatore "_" indica un elemento generico.
+*)
+let rec length ls =
+    match ls with
+    | _::t -> 1+length t (* the scope of t is the expression 1+length t *)
+    | [] -> 0;;
+
+
+//anche nel caso seguente, t rappresenta una parte della lisa e h un suo elemento
+let rec sum ls =
+    match ls with
+    | h::t -> h+sum t (* the scope of h and t is the expression h+sum t *)
+    | [] -> 0;;
+
+let swap ls = (* function defined by three cases *)
+    match ls with
+    | x::y::t -> y::x::t (* the scope of x, y and t is the expression y::x::t *)
+    | [x] -> [x] (* the scope of x is the expression [x] *)
+    | [] -> [];;
+
+
+//Altri modi per definire il pattern matching:
+let mynot2 = function | false -> true | _ -> false
+let iszero2 = function | 0 -> true | _ -> false
+let rec length2 = function | _::tl -> 1+length2 tl | _ -> 0
+
+
+
+//--------------------------------
+//------------STRINGHE------------
+//--------------------------------
+(*
+    Riassunto:
+        - primitive type string supported as sequences of values of type char
+        - standard literals (the only constructors):
+            "" is the empty string, "hello world" is a non-empty string
+        - concatenation ˆ or +: left-associative, lower precedence than application
+        - interpolated strings $"...{expression}...{expression}..."
+*)
+let s = "hello" + " " + "world";;
+//val s: string = "hello world"
+
+//let s2 = "hello" ˆ " " ˆ "world";;
+//val s2: string = "hello world"
+
+let s3 = $"int value {2*3} bool value {true&&false}";;
+//val s3: string = "int value 6 bool value False"
