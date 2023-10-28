@@ -143,8 +143,8 @@ int main(int argc, char **argv)
 		fail_errno("Errore nella write");
 
 
-	nr = read(tcp_socket, answer, sizeof(answer));
-	if (nr < 0)
+	ssize_t readSize = read(tcp_socket, answer, sizeof(answer));
+	if (readSize < 0)
 		fail_errno("TCP Ping could not receive answer from Pong server");
 		
     /*** Check if the answer is OK, and fail if it is not ***/
