@@ -21,15 +21,25 @@ not b1;; //false, nota: il not ha precedenza sugli altri operatori
 if b1 then 1 else 2;; 
 
 
-//----------------------------------
-//------------RICORSIONE------------
-//----------------------------------
+//--------------------------------
+//------------STRINGHE------------
+//--------------------------------
+(*
+    Riassunto:
+        - primitive type string supported as sequences of values of type char
+        - standard literals (the only constructors):
+            "" is the empty string, "hello world" is a non-empty string
+        - concatenation ˆ or +: left-associative, lower precedence than application
+        - interpolated strings $"...{expression}...{expression}..."
+*)
+let s = "hello" + " " + "world";;
+//val s: string = "hello world"
 
-///In questo esempio si dichiara una funzione ricorsiva che calcola 
-/// il fattoriale di un numero.
-/// Dato che è ricorsiva, bisogna specificare "rec" subit dopo "let"
-let rec fact x = 
-    if x = 0 then 1 else x * fact (x-1);;
+//let s2 = "hello" ˆ " " ˆ "world";;
+//val s2: string = "hello world"
+
+let s3 = $"int value {2*3} bool value {true&&false}";;
+//val s3: string = "int value 6 bool value False"
 
 
 //-----------------------------
@@ -74,6 +84,21 @@ let ls2 = [1;2;3];; // [1;2;3]
         val it: int = 1
     > List.item 9999 ls;;
         val it: int = 10000
+
+    
+    * Funzione map:
+    Applica una funzione f a tutti gli elementi della lista:
+        List.map f [x1; x2; ...;xn]=[f x1; f x2; ... ;f xn]
+
+    Esempi:
+      >> map ((+)1) [1;2;3];;       (* remark: (+) 1 equivalent to fun x -> 1+x *)
+        val it: int list = [2; 3; 4]
+      >> map ((<)0) [0;1;2];;       (* remark: (<) 0 equivalent to fun x -> 0<x *)
+        val it: bool list = [false; true; true]
+      >> map String.length ["apple"; "orange" ];;
+        val it: int list = [5; 6]
+
+    * Funzione fold:
 *)
 
 //----------------------------
@@ -86,7 +111,26 @@ let ls2 = [1;2;3];; // [1;2;3]
 //2::[] has type int list
 //true has type bool
 
- 
+
+//----------------------------------
+//------------RICORSIONE------------
+//----------------------------------
+
+///In questo esempio si dichiara una funzione ricorsiva che calcola 
+/// il fattoriale di un numero.
+/// Dato che è ricorsiva, bisogna specificare "rec" subit dopo "let"
+let rec fact x = 
+    if x = 0 then 1 else x * fact (x-1);;
+
+//Ricorsione in coda:
+// tipo particolare e ottimizzante di ricorsione che non fa uso dello stack;
+// Tutte le funzioni ricorsive vanno messe in fondo al corpo della funzione:
+let rec loop acc = function
+    | hd::tl -> loop (acc+hd) tl (* last operation: recursive call *)
+    | _ -> acc
+//(se questo codice non ti è familiare, guarda il PATTERN MATCHING piu avanti).
+
+
 //----------------------------------------
 //------------PATTERN MATCHING------------
 //----------------------------------------
@@ -108,14 +152,14 @@ L'identificatore "_" indica un elemento generico.
 *)
 let rec length ls =
     match ls with
-    | _::t -> 1+length t (* the scope of t is the expression 1+length t *)
+    | _::tail -> 1+length tail (* the scope of t is the expression 1+length t *)
     | [] -> 0;;
 
 
 //anche nel caso seguente, t rappresenta una parte della lisa e h un suo elemento
 let rec sum ls =
     match ls with
-    | h::t -> h+sum t (* the scope of h and t is the expression h+sum t *)
+    | head::tail -> head + sum tail (* the scope of h and t is the expression h+sum t *)
     | [] -> 0;;
 
 let swap ls = (* function defined by three cases *)
@@ -131,23 +175,34 @@ let iszero2 = function | 0 -> true | _ -> false
 let rec length2 = function | _::tl -> 1+length2 tl | _ -> 0
 
 
+//----------------------------------------
+//--------------ACCUMULATORI--------------
+//----------------------------------------
 
-//--------------------------------
-//------------STRINGHE------------
-//--------------------------------
+//link a questa pagina: 
+//https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/lists#recursion-with-lists
 (*
-    Riassunto:
-        - primitive type string supported as sequences of values of type char
-        - standard literals (the only constructors):
-            "" is the empty string, "hello world" is a non-empty string
-        - concatenation ˆ or +: left-associative, lower precedence than application
-        - interpolated strings $"...{expression}...{expression}..."
+    The following code example shows how to use pattern matching to implement
+    a recursive function that performs operations on a list.
+
+let rec sum list =
+    match list with
+    | head :: tail -> head + sum tail
+    | [] -> 0
+
+The previous code works well for small lists, but for larger lists,
+it could overflow the stack. 
+The following code improves on this code by using an accumulator argument,
+a standard technique for working with recursive functions. 
+The use of the accumulator argument makes the function tail recursive, 
+which saves stack space.
+
+let sum list =
+    let rec loop list acc =
+        match list with
+        | head :: tail -> loop tail (acc + head)
+        | [] -> acc
+
+    loop list 0
 *)
-let s = "hello" + " " + "world";;
-//val s: string = "hello world"
 
-//let s2 = "hello" ˆ " " ˆ "world";;
-//val s2: string = "hello world"
-
-let s3 = $"int value {2*3} bool value {true&&false}";;
-//val s3: string = "int value 6 bool value False"
