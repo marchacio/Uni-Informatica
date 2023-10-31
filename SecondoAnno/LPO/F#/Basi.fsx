@@ -42,6 +42,26 @@ let s3 = $"int value {2*3} bool value {true&&false}";;
 //val s3: string = "int value 6 bool value False"
 
 
+//-----------------------------------
+//------------INT E FLOAT------------
+//-----------------------------------
+(*
+    NOTA: type float corresponds to double (64 bit).
+
+    int and float not compatible, no implicit conversions, esempio:
+        > 3.14 * 2;;
+            error: The type ’int’ does not match the type ’float’
+        > 3.14 * float 2;;
+            val it: float = 6.28
+        > int 3.14 * 2;;
+            val it: int = 6
+
+    -> come si può notare dall'esempio precedente, si possono fare dei
+        cast semplicemente scrivendo il tipo voluto di dato prima della
+        variabile di tipo diverso:
+            int (3.14) -> 3
+*)
+
 //-----------------------------
 //------------LISTE------------
 //-----------------------------
@@ -206,3 +226,95 @@ let sum list =
     loop list 0
 *)
 
+//----------------------------------------
+//---------------ECCEZIONI----------------
+//----------------------------------------
+//LINK: https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/exception-handling/
+
+//Dichiarazione di eccezioni e i loro tipi:
+//
+// la sintassi è:
+// "exception" exceptionType "of" argumentType 
+//
+//Per esempio:
+exception MyError of string
+exception GenericError                     (* constant constructor *)
+exception Error1 of string          (* a unary constructor *)
+exception Error2 of string*int      (* a binary constructor *)
+let exc=GenericError
+let exc1=Error1 "error message"
+let exc2=Error2 ("msg", 10)
+
+//Generazione di eccezioni:
+raise(MyError("Error message"))
+//Oppure
+failwith "Error message"
+
+//Catturare le eccezioni con try ... with;
+//Esempio:
+
+// ...
+try
+    if x = y then raise (Error1("x"))
+    else raise (Error2("x", 10))
+with
+    | Error1(str) -> printfn "Error1 %s" str
+    | Error2(str, i) -> printfn "Error2 %s %d" str i
+// ...
+
+
+//--------------------------------------------
+//---------------TIPI DEFINITI----------------
+//--------------------------------------------
+
+//definizione di un nuovo tipo di dato "Color", che può avere uno solo 
+//tra i valori Red o Green o Blue.
+//Come per il Pattern Matching, anche qui esiste la definizione "verticale":
+
+//Esempio di type costante:
+type Color = | Red | Green | Blue;; (* just constant constructors *)
+type Color2 = 
+    | Red 
+    | Green 
+    | Blue;; (* just constant constructors *)
+
+let toString = function (* toString : color -> string *)
+    | Red -> "red"
+    | Green -> "green"
+    | Blue -> "blue";;
+
+let toString2 x =  (* toString : color -> string *)
+    match x with
+        | Red -> "red"
+        | Green -> "green"
+        | Blue -> "blue";;
+
+//Esempio di type NON-costante:
+type Shape =
+    | Square of float
+    | Circle of float
+    | Rectangle of float * float
+
+let perimeter = function
+    | Square side -> 4.0 * side
+    | Circle ray -> 2.0 * System.Math.PI * ray
+    | Rectangle (width,height) -> 2.0 * (width + height)
+
+perimeter (Square 5.0)
+perimeter (Circle 12.3)
+perimeter (Rectangle (4.2, 4))
+
+//Esempio di type NON-costante e RICORSIVO:
+type ExpAST =
+    | IntLiteral of int         (* integer literals *)
+    | Sign of ExpAST            (* unary minus *)
+    | Add of ExpAST * ExpAST    (* binary addition *)
+    | Mul of ExpAST * ExpAST    (* binary multiplication *)
+
+let rec eval = function
+    | IntLiteral n -> n
+    | Sign exp -> - eval exp
+    | Mul (exp1,exp2) -> eval exp1 * eval exp2
+    | Add (exp1,exp2) -> eval exp1 + eval exp2;;
+
+let exp = Sign(Add(IntLiteral 40,IntLiteral 2)) // -(40+2)
