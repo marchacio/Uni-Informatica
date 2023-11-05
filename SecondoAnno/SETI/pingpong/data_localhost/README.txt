@@ -1,3 +1,7 @@
 Questo file contiene tutti i dati calcolati con una connessione con server LOCALHOST:1491.
 
-Per una connessione con il server dell'università, guarda ../data_server, 
+Per una connessione con il server dell'università, guarda ../data_server.
+
+----------------------------------------------------------------------
+Per la creazione dei grafici, guarda ../scripts/graph.bash
+----------------------------------------------------------------------

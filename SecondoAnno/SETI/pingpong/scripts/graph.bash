@@ -4,7 +4,6 @@
 # QUESTO FILE GENERA UN GRAFICO CHE CONFRONTA IL MODELLO BANDA-LATENZA
 # CON I DATI CONTENUTI DAL FILE .BAT PASSATO COME PRIMO ED UNICO PARAMETRO:
 # ES: > ./graph.bash ../data_localhost/tcp_throughput.dat
-# 
 #-----------------------------------------------------------------------------------------
 
 #il primo parametro è il nome del file .dat:
