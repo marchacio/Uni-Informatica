@@ -276,7 +276,7 @@ check_t check_cd(const line_t* const l)
 	//controlla TUTTI i comandi cd
 	for(int i = 0; i < l->n_commands; ++i)
 		//strcmp ritorna 0 se le due stringhe parametro sono uguali
-		if(!strcmp(l->commands[i]->args[0], "cd")) {
+		if(!strcmp(l->commands[i]->args[0], CD)) {
 			if(l->n_commands != 1){
 				perror("\nErrore: Il comando cd non può essere utilizzato con altri comandi!\n");
 				return CHECK_FAILED;
@@ -338,6 +338,21 @@ void change_current_directory(char* newdir)
 	 * (printing an appropriate error message if the syscall fails)
 	 */
 	/*** TO BE DONE START ***/
+
+	//Dal MAN:
+	//On success, zero is returned.  On error, -1 is returned, and errno is set appropriately.
+	if(chdir(newdir)){
+		//controlla gli errori piu comuni. Altrimenti ritorna errore fatale
+		if(errno == EACCES)
+			printf("Errore: permessi mancanti per accedere a %s\n", newdir);
+		else if(errno == ENOENT)
+			printf("Errore: la cartella \"%s\" non esiste in questa directory\n", newdir);
+		else if(errno == ENOTDIR)
+			printf("Errore: %s non è una cartella\n", newdir);
+		else 
+			fatal_errno("Errore sconosciuto nel chdir");
+	}	
+		
 	/*** TO BE DONE END ***/
 }
 
@@ -419,7 +434,10 @@ int main()
 
 			On failure, these functions return NULL, and errno is set to indicate the error...
 		*/
-		if((pwd = getcwd(pwd, 0)) == NULL)
+		static const int PATHDIM = 256;
+
+		pwd = my_malloc(PATHDIM);
+		if((getcwd(pwd, PATHDIM)) == NULL)
 			fatal_errno("Errore nel getcwd");
 
 		/*** TO BE DONE END ***/
