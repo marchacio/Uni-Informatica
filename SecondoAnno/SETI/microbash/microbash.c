@@ -75,14 +75,24 @@ typedef enum { CHECK_OK = 0, CHECK_FAILED = -1 } check_t;
 static const char *const CD = "cd";
 
 typedef struct {
+	// numero argomenti
 	int n_args;
-	char **args; // in an execv*-compatible format; i.e., args[n_args]=0
-	char *out_pathname; // 0 if no output-redirection is present
-	char *in_pathname; // 0 if no input-redirection is present
+
+	// in an execv*-compatible format; i.e., args[n_args]=0
+	char **args; 
+	
+	// 0 if no output-redirection is present
+	char* out_pathname; 
+	
+	// 0 if no input-redirection is present
+	char* in_pathname; 
 } command_t;
 
 typedef struct {
+	//Numero comandi
 	int n_commands;
+
+	//Lista di puntatori di comandi
 	command_t **commands;
 } line_t;
 
@@ -135,7 +145,7 @@ command_t* parse_cmd(char* const cmdstr)
 	command_t* const result = my_malloc(sizeof(*result));
 	memset(result, 0, sizeof(*result));
 	char *saveptr, *tmp;
-	tmp = strtok_r(cmdstr, BLANKS, &saveptr);
+	tmp = strtok_r(cmdstr, BLANKS, &saveptr); //string token read
 	while (tmp) {
 		result->args = my_realloc(result->args, (result->n_args + 2)*sizeof(char *));
 		if (*tmp=='<') {
@@ -163,6 +173,15 @@ command_t* parse_cmd(char* const cmdstr)
 				/* Make tmp point to the value of the corresponding environment variable, 
 					if any, or the empty string otherwise */
 				/*** TO BE DONE START ***/
+
+				//utilizza come argomento &tmp[1] per saltare il primo carattere 
+				//di tmp (che è "$" e fa fallire la getenv)
+				tmp = getenv(&tmp[1]);
+				if(tmp == NULL)
+					//Variabile d'ambiente non trovata
+					//espansione con stringa vuota ("")
+					tmp = "";
+				
 				/*** TO BE DONE END ***/
 			}
 			result->args[result->n_args++] = my_strdup(tmp);
@@ -178,11 +197,11 @@ fail:
 	return 0;
 }
 
-line_t *parse_line(char * const line)
+line_t* parse_line(char * const line)
 {
 	static const char * const PIPE = "|";
 	char *cmd, *saveptr;
-	cmd = strtok_r(line, PIPE, &saveptr);
+	cmd = strtok_r(line, PIPE, &saveptr); //string token read
 	if (!cmd)
 		return 0;
 	line_t *result = my_malloc(sizeof(*result));
@@ -210,10 +229,38 @@ check_t check_redirections(const line_t* const l)
 	 * message and return CHECK_FAILED otherwise
 	 */
 	/*** TO BE DONE START ***/
+
+	//Con il seguente ciclo si eliminano i problemi dovuti a input e output.
+	//I due if ammettono anche la possibilità che ci sia un solo comando con In e Out.
+	//
+	//Per ogni comando passato:
+	for(int i = 0; i < l->n_commands; ++i){
+
+		//se è il primo della lista, può avere input
+		if((i != 0) && (l->commands[i]->in_pathname != 0)){
+			perror("\nErrore: Solo il primo comando può redizionare l'input!\n");
+			return CHECK_FAILED;
+		}
+
+		//se è l'ultimo della lista, può avere output
+		if((i != l->n_commands-1) && (l->commands[i]->out_pathname != 0)){
+			perror("\nErrore: Solo l'ultimo comando può redizionare l'output!\n");
+			return CHECK_FAILED;
+		}
+	}
+	
 	/*** TO BE DONE END ***/
 	return CHECK_OK;
 }
 
+/*
+DAL PDF:
+...
+Per semplicita', il comando cd puo' essere usato solo come primo e unico comando di una linea,
+senza nessuna redirezione dell’I/O (nel caso l’utente cerchi di usare redirezioni o usi cd in pipe con altri comandi,
+dovete segnalare un errore)
+...
+*/
 check_t check_cd(const line_t* const l)
 {
 	assert(l);
@@ -225,6 +272,30 @@ check_t check_cd(const line_t* const l)
 	 * message and return CHECK_FAILED otherwise
 	 */
 	/*** TO BE DONE START ***/
+
+	//controlla TUTTI i comandi cd
+	for(int i = 0; i < l->n_commands; ++i)
+		//strcmp ritorna 0 se le due stringhe parametro sono uguali
+		if(!strcmp(l->commands[i]->args[0], "cd")) {
+			if(l->n_commands != 1){
+				perror("\nErrore: Il comando cd non può essere utilizzato con altri comandi!\n");
+				return CHECK_FAILED;
+			}
+
+			if(l->commands[0]->in_pathname != 0 || l->commands[0]->out_pathname != 0){
+				perror("\nErrore: Il comando cd non può redizionare input/output!\n");
+				return CHECK_FAILED;
+			}
+
+			//ricorda che la stringa è formata da 2 parametri:
+			//0: "cd", 1: "/path/to/folder"
+			if(l->commands[0]->n_args != 2){
+				printf("\nErrore: Il comando cd prende UN SOLO argomento, non %i!\n", l->commands[0]->n_args-1);
+				return CHECK_FAILED;
+			}
+		}
+	
+	
 	/*** TO BE DONE END ***/
 	return CHECK_OK;
 }
@@ -303,7 +374,7 @@ void execute_line(const line_t* const l)
 			/*** TO BE DONE START ***/
 			/*** TO BE DONE END ***/
 		} else if (a != (l->n_commands - 1)) { /* unless we're processing the last command, we need to connect the current command and the next one with a pipe */
-			int fds[2] = {0, 0}; //TODO questo = {...} da rimuovere, è stato aggiunto solo per compilare in fase di test
+			int fds[2] = {0, 0}; //TODO questo "= {...}" è da rimuovere, è stato aggiunto solo per compilare in fase di test
 			/* Create a pipe in fds, and set FD_CLOEXEC in both file-descriptor flags */
 			/*** TO BE DONE START ***/
 			/*** TO BE DONE END ***/
@@ -319,7 +390,7 @@ void execute_line(const line_t* const l)
 
 void execute(char * const line)
 {
-	line_t * const l = parse_line(line);
+	line_t* const l = parse_line(line);
 #ifdef DEBUG
 	print_line(l);
 #endif
