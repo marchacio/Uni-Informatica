@@ -248,6 +248,14 @@ check_t check_redirections(const line_t* const l)
 			return CHECK_FAILED;
 		}
 	}
+
+	//controlla se esiste il file std_in passato al primo comando:
+	if(l->commands[0]->in_pathname)
+		if(access(l->commands[0]->in_pathname, F_OK)){
+			printf("\nErrore: File %s inesistente!\n", l->commands[0]->in_pathname);
+			return CHECK_FAILED;
+		}
+			
 	
 	/*** TO BE DONE END ***/
 	return CHECK_OK;
@@ -329,6 +337,9 @@ void run_child(const command_t* const c, int c_stdin, int c_stdout)
 	 * (printing error messages in case of failure, obviously)
 	 */
 	/*** TO BE DONE START ***/
+	
+	
+
 	/*** TO BE DONE END ***/
 }
 
@@ -380,6 +391,17 @@ void execute_line(const line_t* const l)
 			/* Open c->in_pathname and assign the file-descriptor to curr_stdin
 			 * (handling error cases) */
 			/*** TO BE DONE START ***/
+			
+			/*
+				DAL MAN:
+					On success, open() return the new file descriptor (a nonnegative integer).
+					On error, -1 is returned and errno is set to indicate the error.
+					...
+					O_RDONLY: Apre un file per la lettura. L'offset e' all'inizio del file.
+			*/
+			if((curr_stdin = open(c->in_pathname, O_RDONLY)) == -1)
+				fatal_errno("Errore nella open (stdin)");
+
 			/*** TO BE DONE END ***/
 		}
 		if (c->out_pathname) {
@@ -387,11 +409,42 @@ void execute_line(const line_t* const l)
 			/* Open c->out_pathname and assign the file-descriptor to curr_stdout
 			 * (handling error cases) */
 			/*** TO BE DONE START ***/
+
+			/*
+				DAL MAN:
+					On success, open() return the new file descriptor (a nonnegative integer).
+					On error, -1 is returned and errno is set to indicate the error.
+					...
+					O_WRONLY: Apre un file per la scrittura. La posizione e' all'inizio del file
+					O_CREAT: Se pathname non esiste viene creato.
+					O_TRUNC: Un possibile file esistente verra' sovrascritto
+			*/
+			//il flag 0600 è dovuto a: https://github.com/pantheon-systems/fusedav/issues/204
+			if((curr_stdout = open(c->out_pathname, O_WRONLY | O_CREAT | O_TRUNC, 0600)) == -1)
+				fatal_errno("Errore nella open (stdout)");
+
 			/*** TO BE DONE END ***/
 		} else if (a != (l->n_commands - 1)) { /* unless we're processing the last command, we need to connect the current command and the next one with a pipe */
-			int fds[2] = {0, 0}; //TODO questo "= {...}" è da rimuovere, è stato aggiunto solo per compilare in fase di test
+			int fds[2];
 			/* Create a pipe in fds, and set FD_CLOEXEC in both file-descriptor flags */
 			/*** TO BE DONE START ***/
+			
+			/*
+				DAL MAN:
+					pipe(int pipefd[2])  creates  a  pipe,  a  unidirectional  data  channel that can be used for interprocess communication. 
+					The array pipefd is used to return two file descriptors referring to the ends of the pipe.
+       				pipefd[0] refers to the read end of the pipe. 
+					pipefd[1] refers to the write end of the pipe.
+					...
+					On success, zero is returned.  On error, -1 is returned, errno is set appropriately
+			
+				NOTA: utilizzando pipe2 si possono specificare dei flag.
+					In particolare O_CLOEXEC imposta i due file descriptor come close-on-exec,
+					proprio come farebbe fcntl(fd, FD_CLOEXEC)
+			*/
+			if(pipe2(fds, O_CLOEXEC))
+				fatal_errno("Errore nella pipe");
+
 			/*** TO BE DONE END ***/
 			curr_stdout = fds[1];
 			next_stdin = fds[0];
