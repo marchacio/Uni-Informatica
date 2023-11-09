@@ -102,13 +102,28 @@ void free_command(command_t* const c)
 		or its args are properly NULL-terminated */
 	assert(c==0 || c->n_args==0 || (c->n_args > 0 && c->args[c->n_args] == 0)); 
 	/*** TO BE DONE START ***/
+	
+	for(int i = 0; i<c->n_args; ++i)
+		free(c->args[i]);
+		
+	free(c->args);
+	free(c->in_pathname);
+	free(c->out_pathname);
+	free(c);
+
 	/*** TO BE DONE END ***/
 }
 
-void free_line(line_t * const l)
+void free_line(line_t* const l)
 {
 	assert(l==0 || l->n_commands>=0); /* sanity-check */
 	/*** TO BE DONE START ***/
+
+	for(int i = 0; i<l->n_commands; ++i)
+		free_command(l->commands[i]);
+
+	free(l->commands);
+	free(l);
 	/*** TO BE DONE END ***/
 }
 
@@ -310,20 +325,46 @@ check_t check_cd(const line_t* const l)
 
 void wait_for_children()
 {
-	/* This function must wait for the termination of all child processes.
-	 * If a child exits with an exit-status!=0, then you should print a proper message containing its PID and exit-status.
-	 * Similarly, if a child is killed by a signal, then you should print a message specifying its PID, signal number and signal name.
+	/*  This function must wait for the termination of all child processes.
+	 	If a child exits with an exit-status != 0, then you should print a 
+	 	proper message containing its PID and exit-status.
+	 	Similarly, if a child is killed by a signal, then you should print a 
+		message specifying its PID, signal number and signal name.
 	 */
 	/*** TO BE DONE START ***/
+
+	int stat;
+	wait(&stat); 	//in questo modo verranno scritte informazioni di
+					//terminazione su stat;
+	
+	if (WEXITSTATUS(stat))
+		printf("Exit status: %d\n", WEXITSTATUS(stat));
+
 	/*** TO BE DONE END ***/
 }
 
 void redirect(int from_fd, int to_fd)
 {
-	/* If from_fd!=NO_REDIR, then the corresponding open file should be "moved" to to_fd.
-	 * That is, use dup/dup2/close to make to_fd equivalent to the original from_fd, and then close from_fd
+	/* If from_fd != NO_REDIR, then the corresponding open file should be "moved" to to_fd.
+	   That is, use dup/dup2/close to make to_fd equivalent to the original from_fd, and then close from_fd
 	 */
 	/*** TO BE DONE START ***/
+
+	/*
+		DAL MAN:
+			The  dup(oldfd)  system call creates a copy of the file descriptor oldfd, 
+			using the lowest-numbered unused file descriptor for the new descriptor.
+
+			On  success, these system calls return the new file descriptor.  
+			On error, -1 is returned, and errno is set appropriately.
+	*/
+	if(from_fd != NO_REDIR){
+		if(dup2(from_fd, to_fd) == -1)
+			fatal_errno("Errore nella dup");
+		else
+			close(from_fd);
+	}
+
 	/*** TO BE DONE END ***/
 }
 
@@ -331,14 +372,31 @@ void run_child(const command_t* const c, int c_stdin, int c_stdout)
 {
 	/* This function must:
 	 * 1) create a child process, then, in the child
-	 * 2) redirect c_stdin to STDIN_FILENO (=0)
-	 * 3) redirect c_stdout to STDOUT_FILENO (=1)
-	 * 4) execute the command specified in c->args[0] with the corresponding arguments c->args
-	 * (printing error messages in case of failure, obviously)
+		* 2) redirect c_stdin to STDIN_FILENO (=0)
+		* 3) redirect c_stdout to STDOUT_FILENO (=1)
+		* 4) execute the command specified in c->args[0] with the corresponding arguments c->args
+		* (printing error messages in case of failure, obviously)
 	 */
 	/*** TO BE DONE START ***/
 	
-	
+	pid_t pid;
+	pid = fork(); //fork crea due processi figli
+
+	if(pid < 0)
+		fatal_errno("Errore nella fork");
+	else if(pid == 0){
+		//processo figlio
+
+		//rendi c_stdin = 0 e c_stdout = 1.
+		redirect(c_stdin, STDIN_FILENO);
+		redirect(c_stdout, STDOUT_FILENO);
+
+		//esegui il comando con execvp;
+		//execvp ritorna -1 in caso di errore.
+		if(execvp(c->args[0], c->args) == -1)
+			fatal_errno("Errore nell'esecuzione del comando");
+			
+	}
 
 	/*** TO BE DONE END ***/
 }
@@ -389,7 +447,7 @@ void execute_line(const line_t* const l)
 		if (c->in_pathname) {
 			assert(a == 0);
 			/* Open c->in_pathname and assign the file-descriptor to curr_stdin
-			 * (handling error cases) */
+			   (handling error cases) */
 			/*** TO BE DONE START ***/
 			
 			/*
@@ -437,10 +495,17 @@ void execute_line(const line_t* const l)
 					pipefd[1] refers to the write end of the pipe.
 					...
 					On success, zero is returned.  On error, -1 is returned, errno is set appropriately
-			
+
 				NOTA: utilizzando pipe2 si possono specificare dei flag.
 					In particolare O_CLOEXEC imposta i due file descriptor come close-on-exec,
-					proprio come farebbe fcntl(fd, FD_CLOEXEC)
+					proprio come farebbe fcntl(fd, FD_CLOEXEC).
+
+				DAL MAN DI fcntl:
+					If the FD_CLOEXEC bit is set, the file descriptor  will  automatically 
+					be closed during a successful execve(2) (If the execve(2) fails, the
+					file descriptor is left open).
+					|
+					Quindi, in caso di errore nella exec, ricorda di liberare la memoria.
 			*/
 			if(pipe2(fds, O_CLOEXEC))
 				fatal_errno("Errore nella pipe");
