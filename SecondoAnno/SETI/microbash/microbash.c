@@ -338,7 +338,7 @@ void wait_for_children()
 					//terminazione su stat;
 	
 	if (WEXITSTATUS(stat))
-		printf("Exit status: %d\n", WEXITSTATUS(stat));
+		printf("-------Exit status: %d-------\n", WEXITSTATUS(stat));
 
 	/*** TO BE DONE END ***/
 }
@@ -393,8 +393,21 @@ void run_child(const command_t* const c, int c_stdin, int c_stdout)
 
 		//esegui il comando con execvp;
 		//execvp ritorna -1 in caso di errore.
-		if(execvp(c->args[0], c->args) == -1)
-			fatal_errno("Errore nell'esecuzione del comando");
+		if(execvp(c->args[0], c->args) == -1){
+			if(errno == EACCES)
+				fatal("Errore: file/comando non esistente e/o permessi mancanti");
+			else if(errno == ENOENT)
+				fatal("Errore: il comando/file non esiste");
+			else if(errno == EIO)
+				fatal("Errore: errore nell'I/O");
+			else if(errno == ETXTBSY)
+				fatal("Errore: risorsa già utilizzata da uno o più altri processi");
+			else 
+				//errore generico
+				fatal_errno("Errore nell'esecuzione del comando");
+		}
+
+			
 			
 	}
 
@@ -505,7 +518,7 @@ void execute_line(const line_t* const l)
 					be closed during a successful execve(2) (If the execve(2) fails, the
 					file descriptor is left open).
 					|
-					Quindi, in caso di errore nella exec, ricorda di liberare la memoria.
+					Quindi, in caso di errore nella exec, liberare la memoria.
 			*/
 			if(pipe2(fds, O_CLOEXEC))
 				fatal_errno("Errore nella pipe");
