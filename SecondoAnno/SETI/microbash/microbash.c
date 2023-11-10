@@ -253,13 +253,13 @@ check_t check_redirections(const line_t* const l)
 
 		//se è il primo della lista, può avere input
 		if((i != 0) && (l->commands[i]->in_pathname != 0)){
-			perror("\nErrore: Solo il primo comando può redizionare l'input!\n");
+			printf("--Errore: Solo il primo comando può redizionare l'input!\n");
 			return CHECK_FAILED;
 		}
 
 		//se è l'ultimo della lista, può avere output
 		if((i != l->n_commands-1) && (l->commands[i]->out_pathname != 0)){
-			perror("\nErrore: Solo l'ultimo comando può redizionare l'output!\n");
+			printf("--Errore: Solo l'ultimo comando può redizionare l'output!\n");
 			return CHECK_FAILED;
 		}
 	}
@@ -267,7 +267,7 @@ check_t check_redirections(const line_t* const l)
 	//controlla se esiste il file std_in passato al primo comando:
 	if(l->commands[0]->in_pathname)
 		if(access(l->commands[0]->in_pathname, F_OK)){
-			printf("\nErrore: File %s inesistente!\n", l->commands[0]->in_pathname);
+			printf("--Errore: File %s inesistente!\n", l->commands[0]->in_pathname);
 			return CHECK_FAILED;
 		}
 			
@@ -301,19 +301,19 @@ check_t check_cd(const line_t* const l)
 		//strcmp ritorna 0 se le due stringhe parametro sono uguali
 		if(!strcmp(l->commands[i]->args[0], CD)) {
 			if(l->n_commands != 1){
-				perror("\nErrore: Il comando cd non può essere utilizzato con altri comandi!\n");
+				printf("--Errore: Il comando cd non può essere utilizzato con altri comandi!\n");
 				return CHECK_FAILED;
 			}
 
 			if(l->commands[0]->in_pathname != 0 || l->commands[0]->out_pathname != 0){
-				perror("\nErrore: Il comando cd non può redizionare input/output!\n");
+				printf("--Errore: Il comando cd non può redizionare input/output!\n");
 				return CHECK_FAILED;
 			}
 
 			//ricorda che la stringa è formata da 2 parametri:
 			//0: "cd", 1: "/path/to/folder"
 			if(l->commands[0]->n_args != 2){
-				printf("\nErrore: Il comando cd prende UN SOLO argomento, non %i!\n", l->commands[0]->n_args-1);
+				printf("--Errore: Il comando cd prende UN SOLO argomento, non %i!\n", l->commands[0]->n_args-1);
 				return CHECK_FAILED;
 			}
 		}
@@ -339,6 +339,15 @@ void wait_for_children()
 	
 	if (WEXITSTATUS(stat))
 		printf("-------Exit status: %d-------\n", WEXITSTATUS(stat));
+	
+	//usleep attente n microsecondi, quindi 1000*n millisecondi.
+	//questo piccolo ritardo serve per evitare che il prompt venga stampato
+	//durante l'esecuzione del comando precedente: nonostante ci sia il wait,
+	//	può capitare che il prompt venga stampato pochi istanti prima della 
+	//	fine dell'esecuzione del programma precedente.
+	//Aspettando qualche millisecondo si risolve questo problema senza intaccare 
+	//la "user experience"
+	usleep(100000); //100 millisecondi
 
 	/*** TO BE DONE END ***/
 }
@@ -360,7 +369,7 @@ void redirect(int from_fd, int to_fd)
 	*/
 	if(from_fd != NO_REDIR){
 		if(dup2(from_fd, to_fd) == -1)
-			fatal_errno("Errore nella dup");
+			fatal_errno("--Errore nella dup");
 		else
 			close(from_fd);
 	}
@@ -383,7 +392,7 @@ void run_child(const command_t* const c, int c_stdin, int c_stdout)
 	pid = fork(); //fork crea due processi figli
 
 	if(pid < 0)
-		fatal_errno("Errore nella fork");
+		fatal_errno("--Errore nella fork");
 	else if(pid == 0){
 		//processo figlio
 
@@ -395,20 +404,17 @@ void run_child(const command_t* const c, int c_stdin, int c_stdout)
 		//execvp ritorna -1 in caso di errore.
 		if(execvp(c->args[0], c->args) == -1){
 			if(errno == EACCES)
-				fatal("Errore: file/comando non esistente e/o permessi mancanti");
+				fatal("--Errore: file/comando non esistente e/o permessi mancanti");
 			else if(errno == ENOENT)
-				fatal("Errore: il comando/file non esiste");
+				fatal("--Errore: il comando/file non esiste");
 			else if(errno == EIO)
-				fatal("Errore: errore nell'I/O");
+				fatal("--Errore: errore nell'I/O");
 			else if(errno == ETXTBSY)
-				fatal("Errore: risorsa già utilizzata da uno o più altri processi");
+				fatal("--Errore: risorsa già utilizzata da uno o più altri processi");
 			else 
 				//errore generico
-				fatal_errno("Errore nell'esecuzione del comando");
-		}
-
-			
-			
+				fatal_errno("--Errore nell'esecuzione del comando");
+		}		
 	}
 
 	/*** TO BE DONE END ***/
@@ -426,13 +432,13 @@ void change_current_directory(char* newdir)
 	if(chdir(newdir)){
 		//controlla gli errori piu comuni. Altrimenti ritorna errore fatale
 		if(errno == EACCES)
-			printf("Errore: permessi mancanti per accedere a %s\n", newdir);
+			printf("--Errore: permessi mancanti per accedere a %s\n", newdir);
 		else if(errno == ENOENT)
-			printf("Errore: la cartella \"%s\" non esiste in questa directory\n", newdir);
+			printf("--Errore: la cartella \"%s\" non esiste in questa directory\n", newdir);
 		else if(errno == ENOTDIR)
-			printf("Errore: %s non è una cartella\n", newdir);
+			printf("--Errore: %s non è una cartella\n", newdir);
 		else 
-			fatal_errno("Errore sconosciuto nel chdir");
+			fatal_errno("--Errore sconosciuto nel chdir");
 	}	
 		
 	/*** TO BE DONE END ***/
@@ -471,7 +477,7 @@ void execute_line(const line_t* const l)
 					O_RDONLY: Apre un file per la lettura. L'offset e' all'inizio del file.
 			*/
 			if((curr_stdin = open(c->in_pathname, O_RDONLY)) == -1)
-				fatal_errno("Errore nella open (stdin)");
+				fatal_errno("--Errore nella open (stdin)");
 
 			/*** TO BE DONE END ***/
 		}
@@ -492,7 +498,7 @@ void execute_line(const line_t* const l)
 			*/
 			//il flag 0600 è dovuto a: https://github.com/pantheon-systems/fusedav/issues/204
 			if((curr_stdout = open(c->out_pathname, O_WRONLY | O_CREAT | O_TRUNC, 0600)) == -1)
-				fatal_errno("Errore nella open (stdout)");
+				fatal_errno("--Errore nella open (stdout)");
 
 			/*** TO BE DONE END ***/
 		} else if (a != (l->n_commands - 1)) { /* unless we're processing the last command, we need to connect the current command and the next one with a pipe */
@@ -521,7 +527,7 @@ void execute_line(const line_t* const l)
 					Quindi, in caso di errore nella exec, liberare la memoria.
 			*/
 			if(pipe2(fds, O_CLOEXEC))
-				fatal_errno("Errore nella pipe");
+				fatal_errno("--Errore nella pipe");
 
 			/*** TO BE DONE END ***/
 			curr_stdout = fds[1];
@@ -565,11 +571,11 @@ int main()
 
 			On failure, these functions return NULL, and errno is set to indicate the error...
 		*/
-		static const int PATHDIM = 256;
+		static const int PATH_MAX = 4096; //costante definita in limits.h
 
-		pwd = my_malloc(PATHDIM);
-		if((getcwd(pwd, PATHDIM)) == NULL)
-			fatal_errno("Errore nel getcwd");
+		pwd = my_malloc(PATH_MAX);
+		if((getcwd(pwd, PATH_MAX)) == NULL)
+			fatal_errno("--Errore nel getcwd");
 
 		/*** TO BE DONE END ***/
 		pwd = my_realloc(pwd, strlen(pwd) + prompt_suffix_len + 1);
