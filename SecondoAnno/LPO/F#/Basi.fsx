@@ -192,7 +192,9 @@ let swap ls = (* function defined by three cases *)
 //Altri modi per definire il pattern matching:
 let mynot2 = function | false -> true | _ -> false
 let iszero2 = function | 0 -> true | _ -> false
-let rec length2 = function | _::tl -> 1+length2 tl | _ -> 0
+let rec length2 = function 
+    | _::tl -> 1+length2 tl 
+    | _ -> 0
 
 
 //----------------------------------------
@@ -205,10 +207,10 @@ let rec length2 = function | _::tl -> 1+length2 tl | _ -> 0
     The following code example shows how to use pattern matching to implement
     a recursive function that performs operations on a list.
 
-let rec sum list =
-    match list with
-    | head :: tail -> head + sum tail
-    | [] -> 0
+    let rec sum list =
+        match list with
+        | head :: tail -> head + sum tail
+        | [] -> 0   
 
 The previous code works well for small lists, but for larger lists,
 it could overflow the stack. 
