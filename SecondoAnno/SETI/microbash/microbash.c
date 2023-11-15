@@ -189,13 +189,35 @@ command_t* parse_cmd(char* const cmdstr)
 					if any, or the empty string otherwise */
 				/*** TO BE DONE START ***/
 
-				//utilizza come argomento &tmp[1] per saltare il primo carattere 
-				//di tmp (che è "$" e fa fallire la getenv)
-				tmp = getenv(&tmp[1]);
-				if(tmp == NULL)
-					//Variabile d'ambiente non trovata
-					//espansione con stringa vuota ("")
-					tmp = "";
+				if(&tmp[1] != NULL && tmp[1] == '$'){ //se viene richiamato $$, espandi con il pid del processo attuale
+
+					//ottieni il pid del processo attuale
+					pid_t pid = getpid();
+
+					//calcola la memoria necessaria per allocare una stringa con la dimensione 
+					//delle cifre del pid. Il +1 serve per evitare problemi nell'allocazione di stringhe.
+					int length = snprintf(NULL, 0, "%i", pid);
+					char* str = my_malloc(length+1);
+					
+					//scrivi il pid dentro la variabile str
+					sprintf(str, "%i", pid);
+
+					//modifica tmp in modo che punti alla memoria allocata precedentemente
+					//e cancella str
+					tmp = str;
+					str = NULL;
+					free(str);
+
+				} else {
+
+					//utilizza come argomento &tmp[1] per saltare il primo carattere 
+					//di tmp (che è "$" e fa fallire la getenv)
+					tmp = getenv(&tmp[1]);
+					if(tmp == NULL)
+						//Variabile d'ambiente non trovata
+						//espansione con stringa vuota ("")
+						tmp = "";
+				}
 				
 				/*** TO BE DONE END ***/
 			}
@@ -337,8 +359,14 @@ void wait_for_children()
 	wait(&stat); 	//in questo modo verranno scritte informazioni di
 					//terminazione su stat;
 	
+	//controlla se il processo figlio è stato ucciso da segnale
+	if(WIFSIGNALED(stat))
+		printf("--Errore: Processo ucciso da segnale\n");
+
+	//In caso di exit status != 0, stampa il codice d'errore
 	if (WEXITSTATUS(stat))
 		printf("-------Exit status: %d-------\n", WEXITSTATUS(stat));
+	
 	
 	//usleep attente n microsecondi, quindi 1000*n millisecondi.
 	//questo piccolo ritardo serve per evitare che il prompt venga stampato
