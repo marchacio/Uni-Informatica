@@ -31,7 +31,7 @@ double f(double x) {
 //funzione Polinomio di Taylor
 double fNx(double n, double x) {
     if(x == 0)
-        throw "x uguale a 0, errore!";
+        throw "x uguale a 0, errore!"; //0^0 -> F.I.
 
     if(n == 0) //caso base:
         return 1; //questo perche x^n/n! -> x^0/1 -> 1/1
