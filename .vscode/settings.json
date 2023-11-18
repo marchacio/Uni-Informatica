@@ -4,6 +4,8 @@
     "C_Cpp.errorSquiggles": "disabled",
     "files.associations": {
         "sstream": "c",
-        "ratio": "c"
+        "ratio": "c",
+        "cmath": "cpp",
+        "iostream": "cpp"
     }
 }

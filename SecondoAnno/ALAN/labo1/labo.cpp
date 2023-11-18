@@ -12,11 +12,11 @@ const string ANNA = "5565836";
 const int LUNGH_MATR = 7;
 
 //-----------------------------------------------------------------------
-//-------------------------FUNZIONI MATEMATICHE--------------------------
+//-------------------------FUNZIONI AUSILIARIE---------------------------
 //-----------------------------------------------------------------------
 
-int fattoriale(int n){
-    int fattor = 1;
+double fattoriale(double n){
+    double fattor = 1;
     for (int i = 1; i <= n; i++)
         fattor *= i;
     
@@ -60,7 +60,7 @@ void es1() {
     //facendo i calcoli matematici, il risultato di a+b+c (indipendentemente dalle parentesi) dovrebbe essere a,
     //in quanto c = -b e quindi c e b si semplificano.
     //Come si vede dall'output del programma, il primo metodo di calcolo (a+b)+c è instabile, mentre il secondo è stabile
-    //e riporta i risultati corretti.
+    //e riporta i risultati corretti per via dell'ordine delle cancellazioni.
     for(int i = 0; i <= 6; ++i){
         double a = (double)(d0+1)*pow(10, i);
         double b = (double)(d1+1)*pow(10, 20);
