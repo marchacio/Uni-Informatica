@@ -1,6 +1,7 @@
 #include <string>
 #include <iostream>
 #include <cmath>
+#include <vector>
 
 using namespace std;
 
@@ -34,11 +35,8 @@ const int DIM_MATRICE_ES1A = 4;
 //seconda richiesta (b)
 const int DIM_MATRICE_PASCAL = 10;
 
-
 //norma infinito definita come il max tra le norme dei vettori della matrice quadrata.
-//Utilizza i template per accettare matrici di dimensione variabile.
-template <size_t size_x, size_t size_y>
-double normaInfinito(int (&matrice)[size_x][size_y], const int DIM_MATRICE) {
+double normaInfinito(vector<vector<int>> matrice, const int DIM_MATRICE) {
     double normaInf;
 
     //per ogni vettore:
@@ -65,24 +63,56 @@ void es1() {
 
     cout << "\n--------------------------ESERCIZIO 1--------------------------\n";
 
-    int matrice1[DIM_MATRICE_ES1A][DIM_MATRICE_ES1A] = 
-        {{3, 0, 0, 0}, {1, 7, -3, 0}, {-1, -3, 9, 4}, {0, 0, -2, -10}};
-    int matrice2[DIM_MATRICE_ES1A][DIM_MATRICE_ES1A] = 
-        {{2, 1, 3, 0}, {4, 3, -1, -1}, {-2, 0, 1, 2}, {0, 1, 2, 1}};
+    //--------------------------PARTE 1--------------------------
+    vector<vector<int>> matrice1{{3, 0, 0, 0}, {1, 7, -3, 0}, {-1, -3, 9, 4}, {0, 0, -2, -10}};
+    vector<vector<int>> matrice2{{2, 1, 3, 0}, {4, 3, -1, -1}, {-2, 0, 1, 2}, {0, 1, 2, 1}};
 
     cout << "Norma Infinito della matrice1: " << normaInfinito(matrice1, DIM_MATRICE_ES1A) << "\n";
     cout << "Norma Infinito della matrice2: " << normaInfinito(matrice2, DIM_MATRICE_ES1A) << "\n";
     
+    //--------------------------PARTE 2--------------------------
     //CREA LA MATRICE PASCAL 10x10:
-    //Alloca lo spazio per le righe della matrice
-    int matricePascal[DIM_MATRICE_PASCAL][DIM_MATRICE_PASCAL] = {};
+    vector<vector<int>> matricePascal(DIM_MATRICE_PASCAL);
 
-    for(int i = 0; i<DIM_MATRICE_PASCAL; ++i)
+    for(int i = 0; i<DIM_MATRICE_PASCAL; ++i){
+        //inizializza la riga i
+        matricePascal[i] = vector<int>(DIM_MATRICE_PASCAL);
+
         for(int j = 0; j<DIM_MATRICE_PASCAL; ++j)
             //Riempi righe e colonne della matrice
             matricePascal[i][j] = (fattoriale(i+j-2) / (fattoriale(i-1) * fattoriale(j-1)));
+    }
     
     cout << "Norma Infinito della matrice di Pascal: " << normaInfinito(matricePascal, DIM_MATRICE_PASCAL) << "\n";
+
+    //--------------------------PARTE 3--------------------------
+    //utilizziamo il numero matricola di MARCO
+    string nMatr = MARCO;
+
+    char s0 = nMatr[LUNGH_MATR-1];
+    char s1 = nMatr[LUNGH_MATR-2];
+    //converti il char in se stesso ma numero
+    int d0 = ((int)s0)-((int)'0');
+    int d1 = ((int)s1)-((int)'0');
+
+    int DIM_MATRICE_TRIANGOLARE = 10*(d1+1)+d0; //76
+    vector<vector<int>> matriceTriangolare(DIM_MATRICE_TRIANGOLARE);
+
+    for(int i = 0; i < DIM_MATRICE_TRIANGOLARE; ++i){
+        //inizializza la riga i
+        matriceTriangolare[i] = vector<int>(DIM_MATRICE_TRIANGOLARE);
+
+        for(int j = 0; j < DIM_MATRICE_TRIANGOLARE; ++j)
+            if(i == j)
+                matriceTriangolare[i][j] = 2;
+            else if(abs(i-j) == 1)
+                matriceTriangolare[i][j] = -1;
+            else
+                matriceTriangolare[i][j] = 0;
+    }
+        
+    
+    cout << "Norma Infinito della matrice triangolare: " << normaInfinito(matriceTriangolare, DIM_MATRICE_TRIANGOLARE) << "\n";
 }
 
 int main() {
