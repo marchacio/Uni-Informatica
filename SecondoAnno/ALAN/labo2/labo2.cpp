@@ -109,8 +109,7 @@ void es1() {
                 matriceTriangolare[i][j] = -1;
             else
                 matriceTriangolare[i][j] = 0;
-    }
-        
+    }   
     
     cout << "Norma Infinito della matrice triangolare: " << normaInfinito(matriceTriangolare, DIM_MATRICE_TRIANGOLARE) << "\n";
 }
