@@ -14,16 +14,34 @@ class Point {
     }
 }
 
-//Con la parola "static" si definiscono i campi di classe: campi a cui si può accedere 
-// anche quando la classe non è stata ancora inizializzata.
+//Con la parola "static" si definiscono i campi di classe:
+//questi campi mantengono lo stesso valore attraverso le instanze delle classi.
+//Per es: 
 class Point2 {
     private int x,y;
-    private static int z = 5; 
+    private static int z; 
 
     //...
 }
-//...
-Point2.z;       //5
+//se imposto z = 10, z sarà 10 per ogni istanza della classe Point2:
+Point2 p1 = Point2();
+p1.modificaZ(5);        //imposta z = 5
+
+Point2 p2 = Point2();
+p2.getZ()               //ritorna 5
+
+//I campi statici possono essere inizializzati in due modi:
+public class Test {
+    private static int val = 5; //1° modo: inizializzarli nella loro definizione
+    private static int fact = 1;
+
+    //2° modo: inizializzarli con la parola static seguita da {...} 
+    static { 
+        for (int i = 1; i <= Test.val; i++)
+            Test.fact *= i;
+    }
+}
+    
 
 
 // In java, come nella maggior parte dei linguaggi di programmazione, gli oggetti sono referenze in memoria:
@@ -102,7 +120,7 @@ public class TimerClass {
 //Se non è specificato un costruttore, il compilatore ne aggiunge uno "vuoto" che
 // riempie i campi con valori di default.
 //
-//Ecco un esempio di classe con 3 costruttori diversi che inizializzano le variabili 
+//Ecco un esempio di classe con 4 costruttori diversi che inizializzano le variabili 
 //private in modo diverso tra loro (NOTA: tutti i costruttori devono differire per numero o tipo di parametri):
 public class TimerClass {
     private int time = 60;
@@ -121,6 +139,12 @@ public class TimerClass {
         this.time = other.getTime();
     }
 
+    //Costruttore di tipo statico (factory) che serve per rendere
+    //piu espliciti i parametri del costruttore
+    public static TimerClass timerFromTime(int time){
+        return new TimerClass(time/60);
+    }
+
     //...
 }
 
@@ -128,3 +152,12 @@ public class TimerClass {
 //automaticamente con dei valori di default:
 //  0 per int, flase per boolean...
     
+
+//---------------------------------------------
+//-----------------SUB-TYPING------------------
+//---------------------------------------------
+//
+//I sotto-tipi (sub-typing) sono delle relazioni tra classi.
+//Per esempio, TimerClass è un sottotipo di Object e in java si definisce cosi:
+// TimerClass <= Object         (minore uguale)
+// ma Object ≤\ TimerClass      (non minore uguale)
