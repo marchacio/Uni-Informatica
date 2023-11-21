@@ -41,7 +41,12 @@ public class Test {
             Test.fact *= i;
     }
 }
-    
+
+
+//Con la parola FINAL si definisce una variabile read-only, ovvero non può
+//essere modificata e conterrà sempre lo stesso valore dalla sua inizializzazione
+//fino alla sua morte.
+
 
 
 // In java, come nella maggior parte dei linguaggi di programmazione, gli oggetti sono referenze in memoria:
@@ -161,3 +166,41 @@ public class TimerClass {
 //Per esempio, TimerClass è un sottotipo di Object e in java si definisce cosi:
 // TimerClass <= Object         (minore uguale)
 // ma Object ≤\ TimerClass      (non minore uguale)
+
+
+//---------------------------------------------
+//-----------------INTERFACCE------------------
+//---------------------------------------------
+//
+//Le interfacce definiscono i metodi pubblici di una classe 
+//ma non contengono il codice implementativo:
+
+public interface Timer { // Timer is a type but not a class
+    
+    // all these methods are abstract and public
+    boolean isRunning();
+
+    int getTime();
+    
+    void tick();
+
+    int reset(int minutes);
+}
+
+public class TimerClass implements Timer { // TimerClass ≤ Timer
+    private int time = 60;
+    public int getTime() {
+        return this.time;
+    }
+
+    //ALL METHODS of Timer must be defined in the class
+    //...
+
+    public TimerClass(Timer other) {
+        this.time = other.getTime();
+    }
+}
+
+//NOTA1: una classe può implementare piu interfacce.
+//NOTA2: le interfacce non sono oggetti, sono dei tipi ma non 
+//       possono essere inizializzate.
