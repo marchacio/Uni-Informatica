@@ -178,12 +178,18 @@ int main() {
     es1();
 
     cout << "\n--------------------------ESERCIZIO 2--------------------------\n";
+    cout << "ALGORITMO 1:\n";
 
     es2(0.5, false);
     es2(30, false);
 
-    es2(-0.5, true);
-    es2(-30, true);
+    es2(-0.5, false);
+    es2(-30, false);
+
+    cout << "ALGORITMO 2:\n";
+
+    es2(0.5, true);
+    es2(30, true);
 
     cout << "\n--------------------------ESERCIZIO 3--------------------------\n";
 
