@@ -1,6 +1,7 @@
 #include <string>
 #include <iostream>
 #include <cmath>
+#include <iomanip> //necessario per la stampa di table ordinati
 
 using namespace std;
 
@@ -11,10 +12,24 @@ const string ANNA = "5565836";
 //Lunghezza del codice matricola
 const int LUNGH_MATR = 7;
 
+
 //-----------------------------------------------------------------------
 //-------------------------FUNZIONI AUSILIARIE---------------------------
 //-----------------------------------------------------------------------
 
+//funzione ausiliaria per stampare delle tabelle su standard output
+template<typename T> void stampaElemTabella(T t){
+    cout << left << setw(16) << setfill(' ') << t;
+}
+
+//stampa un divisore per la tabella
+void stampaDivisoreTabella(int nColonne) {
+    for(int i = 0; i < nColonne; ++i)
+        cout << "---------------";
+    cout << "\n";
+}
+
+//calcola il fattoriale del numero n passato come argomento
 double fattoriale(double n){
     double fattor = 1;
     for (int i = 1; i <= n; i++)
@@ -39,6 +54,7 @@ double fNx(double n, double x) {
     return (pow(x, n)/fattoriale(n)) + fNx(n-1, x);
 }
 
+
 //-----------------------------------------------------------------------
 //-------------------------------ESERCIZI--------------------------------
 //-----------------------------------------------------------------------
@@ -51,57 +67,83 @@ void es1() {
     char s0 = nMatr[LUNGH_MATR-1];
     char s1 = nMatr[LUNGH_MATR-2];
 
-    //converti il char in se stesso ma numero
+    //converti il char in se stesso ma come numero
     int d0 = ((int)s0)-((int)'0');
     int d1 = ((int)s1)-((int)'0');
 
-    cout << "Numero matricola: " << nMatr << "; ultime due cifre: " << d0 << ", " << d1 << ".\n";
+    cout << "Numero matricola: " << nMatr << "; ultime due cifre: " << d0 << ", " << d1 << ".\n\n";
+
+    //stampa gli header della tabella
+    stampaElemTabella("i");
+    stampaElemTabella("(a+b)+c");
+    stampaElemTabella("a+(b+c)");
+    cout << endl;
+    stampaDivisoreTabella(3);
     
     //facendo i calcoli matematici, il risultato di a+b+c (indipendentemente dalle parentesi) dovrebbe essere a,
     //in quanto c = -b e quindi c e b si semplificano.
     //Come si vede dall'output del programma, il primo metodo di calcolo (a+b)+c è instabile, mentre il secondo è stabile
     //e riporta i risultati corretti per via dell'ordine delle cancellazioni.
     for(int i = 0; i <= 6; ++i){
-        double a = (double)(d0+1)*pow(10, i);
-        double b = (double)(d1+1)*pow(10, 20);
-        double c = -b;
+        double a = (double)(d0+1)*pow(10, i); //10^i
+        double b = (double)(d1+1)*pow(10, 20);//10^20
+        double c = -b;                        //-b
 
-        cout << (a+b)+c << "\t" << a+(b+c) << "\n";
+        stampaElemTabella(i);
+        stampaElemTabella((a+b)+c);
+        stampaElemTabella(a+(b+c));
+        cout << endl;
     }
+    cout << endl << endl;
 }
 
-void es2(double x1, double x2) {
+//l'argomento "bool reciproco" sta ad indicare se è da calcolare e stampare il reciproco
+//della funzione fNx 
+void es2(double x, bool reciproco) {
 
-    cout << "Valori x in input: " << x1 << ", " << x2 << ":\n\n";
+    cout << "---> Valore x in input: " << x << ":\n\n";
 
-    double fx1 = f(x1);
-    double fx2 = f(x2);
-
-    cout << "output di f: " << fx1 << "   " << fx2 << "\n\n";
+    double fx = f(x);
+    cout << "output di f(x): " << fx << "\n\n";
 
     const int SIZE = 5;
     int numeri[SIZE] = {3, 10, 50, 100, 150};
 
+    //stampa gli header della tabella
+    stampaElemTabella("N");
+    stampaElemTabella("fN(x)");
+    stampaElemTabella("Err Ass");
+    stampaElemTabella("Err Rel");
+    if(reciproco)
+        stampaElemTabella("Rec");
+    
+    cout << endl;
+    stampaDivisoreTabella(reciproco ? 5 : 4);
+
+    //esegui i calcoli e stampa una riga con i risultati
     for(int i = 0; i < SIZE; ++i){
-        double fNx1 = fNx(numeri[i], x1);
-        double fNx2 = fNx(numeri[i], x2);
+        double fnx = fNx(numeri[i], x);
         
         //formula errore assoluto: EA = x('perturbata') - x
-        double errAssoluto1 = fNx1 - fx1;
-        double errAssoluto2 = fNx2 - fx2;
+        double errAssoluto = fnx - fx;
 
         //formula errore relativo: ER = ( x('perturbata') - x ) / x
-        double errRelativo1 = (fNx1 - fx1)/fx1;
-        double errRelativo2 = (fNx2 - fx2)/fx2;
+        double errRelativo = (fnx - fx)/fx;
 
         //il "reciproco di n" è quel numero che moltiplicato per n fa 1.
-        double reciproco1 = 1/fNx1;
-        double reciproco2 = 1/fNx2;
+        double rec = 1/fnx;
 
         //stampa risultati ottenuti
-        cout << "fN(N = " << numeri[i] << "): " << fNx1 << " (EA: " << errAssoluto1 << ", ER: " << errRelativo1 << ", REC: " << reciproco1 << ")   " 
-        << fNx2 << " (EA: " << errAssoluto2 << ", ER: " << errRelativo2 << ", REC: " << reciproco2 << ").\n";
-    }    
+        stampaElemTabella(numeri[i]);
+        stampaElemTabella(fnx);
+        stampaElemTabella(errAssoluto);
+        stampaElemTabella(errRelativo);
+        if(reciproco)
+            stampaElemTabella(rec);
+        
+        cout << endl;
+    }
+    cout << endl << endl; 
 }
 
 /*
@@ -135,13 +177,15 @@ int main() {
     cout << "\n--------------------------ESERCIZIO 1--------------------------\n";
     es1();
 
-    cout << "\n\n--------------------------ESERCIZIO 2--------------------------\n";
+    cout << "\n--------------------------ESERCIZIO 2--------------------------\n";
 
-    es2(0.5, 30);
-    cout << "\n\n";
-    es2(-0.5, -30);
+    es2(0.5, false);
+    es2(30, false);
 
-    cout << "\n\n--------------------------ESERCIZIO 3--------------------------\n";
+    es2(-0.5, true);
+    es2(-30, true);
+
+    cout << "\n--------------------------ESERCIZIO 3--------------------------\n";
 
     es3();
 
