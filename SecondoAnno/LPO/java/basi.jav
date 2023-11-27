@@ -204,3 +204,28 @@ public class TimerClass implements Timer { // TimerClass ≤ Timer
 //NOTA1: una classe può implementare piu interfacce.
 //NOTA2: le interfacce non sono oggetti, sono dei tipi ma non 
 //       possono essere inizializzate.
+
+
+//---------------------------------------------
+//--------------------ARRAY--------------------
+//---------------------------------------------
+//
+//Gli array in java si definiscono cosi:
+int[] array;        //array è una reference a un array di interi
+array = new int[10] //array è stato inizializzato dinamicamente ed è utilizzabile.
+                    //quando si inizializza, bisogna specificare la dimensione
+
+//Per gli array multidimensionali si applica la sintassi come in c++:
+int[][] matrice = new int[3][] //solo l'ultima size è opzionale
+
+
+//---------------------------------------------
+//--------------------MAIN---------------------
+//---------------------------------------------
+//
+//In java, l'esecuzione di un programma deve iniziare dal main di una classe
+//e questo main deve avere la seguente forma: 
+public static void main(String[] args) {...}
+
+//Lo standard output è definito come System.out, con i metodi print, println...
+
