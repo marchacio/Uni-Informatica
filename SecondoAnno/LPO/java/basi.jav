@@ -229,3 +229,50 @@ public static void main(String[] args) {...}
 
 //Lo standard output è definito come System.out, con i metodi print, println...
 
+
+//-----------------------------------------
+//----------------PACKAGES-----------------
+//-----------------------------------------
+//
+//Con la parola "package nome_pack" ad inizio file, si definisce che quel file
+//faccia parte del pacchetto nome_pack (che solitamente ha il nome del folder contenente
+//tale file).
+//ES:
+/*
+Project (root):
+  SubFolder SF1:
+    file c1.java:
+        package p1;
+        import ...;
+
+        public class C1 {...}
+        class D1 {...}
+    
+    file c2.java:
+        package p1;
+        import ...;
+
+        public class C2 {...}
+        class D2 {...}
+
+  SubFolder SF2:
+    file c1.java:
+        package p2;
+        import ...;
+
+        public class C1 {...}
+        class D1 {...}
+*/
+//I packages contengono classi (solo le pubbliche potranno essere usate al di 
+//fuori del pacchetto) e sotto-pacchetti.
+//Le classi private potranno essere usate solamente all'interno del pacchetto.
+//
+//In sostanza, i pacchetti rispecchiano la struttura del progetto:
+//package = folder containing:
+//  subpackages (=subfolders)
+//  compilation units (=files) declaring classes and interfaces
+//Inoltre, i nomi dei pacchetti rispecchiano il path della loro cartella:
+//  javax.swing.tree corrisponde a javax/swing/tree
+//
+//Per importare tutti i sottofile di una cartella, utilizza l'asterisco:
+import java.System.*
