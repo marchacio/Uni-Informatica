@@ -47,6 +47,7 @@ void printMatrice(vector<vector<float>> A) {
 //------------------------------ESERCIZIO 1-------------------------------
 //------------------------------------------------------------------------
 
+//crea e ritorna la matrice di Pascal come definita nel labo
 vector<vector<float>> defMatricePascal() {
     //Creazione della matrice Pascal 10x10:
     const int DIM_MATRICE_PASCAL = 10;
@@ -113,22 +114,17 @@ float normaInfinito(vector<vector<float>> matrice) {
     return normaInf;
 }
 
+//Primo esercizio del labo
 void es1(vector<vector<float>> matrice1, vector<vector<float>> matrice2, vector<vector<float>> matricePascal, vector<vector<float>> matriceTriangolare) 
 {
+    cout << "\n---------------------------------------------------------------\n";
+    cout << "--------------------------ESERCIZIO 1--------------------------\n";
+    cout << "---------------------------------------------------------------\n";
 
-    cout << "\n--------------------------ESERCIZIO 1--------------------------\n";
-
-    //--------------------------PARTE 1--------------------------
 
     cout << "Norma Infinito della matrice1: " << normaInfinito(matrice1) << "\n";
-    cout << "Norma Infinito della matrice2: " << normaInfinito(matrice2) << "\n";
-    
-    //--------------------------PARTE 2--------------------------
-    
-    cout << "Norma Infinito della matrice di Pascal: " << normaInfinito(matricePascal) << "\n";
-
-    //--------------------------PARTE 3--------------------------
-    
+    cout << "Norma Infinito della matrice2: " << normaInfinito(matrice2) << "\n";    
+    cout << "Norma Infinito della matrice di Pascal: " << normaInfinito(matricePascal) << "\n";    
     cout << "Norma Infinito della matrice triangolare: " << normaInfinito(matriceTriangolare) << "\n";
 }
 
@@ -136,14 +132,14 @@ void es1(vector<vector<float>> matrice1, vector<vector<float>> matrice2, vector<
 //------------------------------ESERCIZIO 2-------------------------------
 //------------------------------------------------------------------------
 
-//Funzione che calcola e ritorna il termine noto del sistema Ax = b con x = {1, ..., 1}.
+//ritorna il termine noto del sistema Ax = b con x = {1, ..., 1}.
 vector<float> calcolaB(vector<vector<float>> A) {
 	// numeroR_A è il numero di Righe della matrice A
 	unsigned int numeroR_A = A.size();
     // numeroC_A è il numero di Colonne della matrice A
 	unsigned int numeroC_A = A[0].size(); 
 	
-	vector<float> b(numeroR_A); // Inizializzazione di b
+	vector<float> b(numeroR_A);
 
 	//Scansione della matrice A per il calcolo del vettore b:
     //  dato che x = {1, ..., 1}, per trovare il termine noto dell'equazione avente come 
@@ -155,7 +151,7 @@ vector<float> calcolaB(vector<vector<float>> A) {
 	return b;
 }
 
-//Funzione che fa il merge di una matrice A e un vettore b
+//merge di una matrice A e un vettore b
 vector<vector<float>> merge(vector<vector<float>> A, vector<float> b) {
 
     //numeroR_A è il numero di righe della matrice A e del vettore b
@@ -168,7 +164,7 @@ vector<vector<float>> merge(vector<vector<float>> A, vector<float> b) {
 	return matriceFinale;
 }
 
-//Funzione che effetua il pivoting parziale dove: 
+//effetua il pivoting parziale dove: 
 //  A è la matrice sulla quale si effettua il pivoting parziale
 //  b è il vettore dei termini noti sul quale si effettua il pivoting parziale
 //  k è la riga presa in considerazione per l'esecuzione del pivoting parziale
@@ -177,7 +173,6 @@ void pivotingParziale(vector<vector<float>>& A, vector<float>& b, unsigned int k
 	//i_max contiene la riga avente pivot di modulo massimo se scambiata con la riga k;
     //inizialmente tale riga è proprio k
 	unsigned int i_max = k;	
-
     //numeroR_A è il numero di righe della matrice A e del vettore b
 	unsigned int numeroR_A = A.size(); 
 	
@@ -200,7 +195,7 @@ void pivotingParziale(vector<vector<float>>& A, vector<float>& b, unsigned int k
 }
 
 
-//Funzione che esegue l'Eliminazione Gaussiana sulla matrice A e 
+//esegue l'Eliminazione Gaussiana sulla matrice A e 
 //il vettore b dei termini noti
 vector<vector<float>> Gauss(vector<vector<float>> A, vector<float> b) {
 
@@ -229,9 +224,7 @@ vector<vector<float>> Gauss(vector<vector<float>> A, vector<float> b) {
 		//Assegnazione del pivot
 		pivot = ridotta_A[k][k];
 		
-		//Azzeramento dei valori sotto al pivot e conseguente modifica delle loro righe
 		for(unsigned int i = k+1; i < numeroR_A; ++ i) {
-			
 			//Calcolo del fattore moltiplicativo
 			m = ridotta_A[i][k] / pivot;
 			
@@ -244,11 +237,10 @@ vector<vector<float>> Gauss(vector<vector<float>> A, vector<float> b) {
 		}
 	}
 	
-	//ritorna l'unione di A e b ridotti per avere un'unica matrice ridotta A|b
 	return merge(ridotta_A, ridotta_B);
 }
 
-//Funzione che divide una matrice A dal vettore b e lo ritorna
+//divide una matrice A dal vettore b e lo ritorna
 vector<float> dividi(vector<vector<float>>& A) {
 
     //numeroR_A è il numero di righe della matrice A e del vettore b
@@ -264,7 +256,7 @@ vector<float> dividi(vector<vector<float>>& A) {
 }
 
 
-//Funzione che esegue la sostituzione all'indietro sulla matrice A e il vettore b 
+//sostituzione all'indietro sulla matrice A e il vettore b 
 //dei termini noti (entrambi ridotti)
 vector<float> sostituzioneIndietro(vector<vector<float>> A) {
 
@@ -279,9 +271,7 @@ vector<float> sostituzioneIndietro(vector<vector<float>> A) {
     //il vettore x conterrà le soluzioni del sistema
 	vector<float> x(numeroR_A); 
 
-	//Scansione di tutte le righe della matrice a partire dall'ultima
 	for(int i = numeroR_A - 1; i >= 0; --i) {
-		
 		//Inizializzazione del termine noto dell'equazione
 		float local_b = b[i];
 
@@ -291,15 +281,13 @@ vector<float> sostituzioneIndietro(vector<vector<float>> A) {
 		for(int j = numeroC_A - 1; j > i; --j) 
 			local_b -= A[i][j]*x[j];     
 		
-        //Finito il ciclo, si è arrivati nella posizione i, quella per la quale manca la soluzione x[i];
-        //quest'ultima viene quindi trovata facendo il rapporto tra il termine noto ricavato sopra e il coefficiente di x[i]
 		x[i] = local_b/A[i][i];			
 	}	
 	
 	return x;		
 }
 
-//calcola e stampa i vari punti dell'es 2
+//Esegui l'es 2 su una singola matrice
 void es2_singolaMatrice(vector<vector<float>> A) {
 
 	//Calcolo del termine noto del sistema Ax = b con x = {1 ... 1}
@@ -326,7 +314,9 @@ void es2_singolaMatrice(vector<vector<float>> A) {
 //Funzione del secondo esercizio
 void es2(vector<vector<float>> matrice1, vector<vector<float>> matrice2, vector<vector<float>> matricePascal, vector<vector<float>> matriceTriangolare) 
 {
-    cout << "\n--------------------------ESERCIZIO 2--------------------------\n";
+    cout << "\n---------------------------------------------------------------\n";
+    cout << "--------------------------ESERCIZIO 2--------------------------\n";
+    cout << "---------------------------------------------------------------\n";
 
     //esegui l'es2 per ogni matrice
     cout << "\n-- Matrice 1" << endl;
@@ -371,7 +361,6 @@ vector<float> termNoti_BP(vector<vector<float>> A) {
 
 	//Questo è il vettore "che perturba"
 	vector<float> deltaB(numeroR_A);
-	
 	for(unsigned int i = 0; i < numeroR_A; ++i)
 		if(i%2 == 0)
 			deltaB[i] = -0.01 * normInf_b;
@@ -389,7 +378,6 @@ void es3_singolaMatrice(vector<vector<float>> A) {
 
 	//Calcolo del vettore dei termini noti b perturbato
 	vector<float> b = termNoti_BP(A);
-	
 	//Risoluzione del sistema Ax = b (perturbato)
 	vector<vector<float>> ridotta = Gauss(A, b);
 	
@@ -406,7 +394,9 @@ void es3_singolaMatrice(vector<vector<float>> A) {
 //esegui l'esercizio 3
 void es3(vector<vector<float>> matrice1, vector<vector<float>> matrice2, vector<vector<float>> matricePascal, vector<vector<float>> matriceTriangolare) {
 	
-    cout << "\n--------------------------ESERCIZIO 3--------------------------\n";
+    cout << "\n---------------------------------------------------------------\n";
+    cout << "--------------------------ESERCIZIO 3--------------------------\n";
+    cout << "---------------------------------------------------------------\n";
 
     //esegui l'es2 per ogni matrice
     cout << "\n-- Matrice 1" << endl;
