@@ -24,35 +24,45 @@ double fattoriale(double n){
     return fattor;
 }
 
+//Funzione che stampa un vettore 
+void printVettore(vector<float> v) {
+	cout << "[";
+	for(float el : v)
+		cout << el << " ";
+	cout << "]" << endl;
+}
 
-void printTermineNoto(vector<float> b){
-    for(unsigned int i = 0; i<b.size(); ++i)
-        cout << " " << b[i];
+//Funzione che stampa la matrice data.
+//
+void printMatrice(vector<vector<float>> A) {
+	for(vector<float> v : A)
+		printVettore(v);
 }
 
 //-----------------------------------------------------------------------
 //-------------------------------ESERCIZI--------------------------------
 //-----------------------------------------------------------------------
 
-vector<vector<int>> defMatricePascal() {
+//------------------------------------------------------------------------
+//------------------------------ESERCIZIO 1-------------------------------
+//------------------------------------------------------------------------
+
+vector<vector<float>> defMatricePascal() {
     //Creazione della matrice Pascal 10x10:
     const int DIM_MATRICE_PASCAL = 10;
-    vector<vector<int>> matricePascal(DIM_MATRICE_PASCAL);
+    vector<vector<float>> matricePascal(DIM_MATRICE_PASCAL, vector<float>(DIM_MATRICE_PASCAL));
 
-    for(int i = 0; i<DIM_MATRICE_PASCAL; ++i){
-        //inizializza la riga i
-        matricePascal[i] = vector<int>(DIM_MATRICE_PASCAL);
-
+    //Inizializza i dati all'interno della matrice
+    for(int i = 0; i<DIM_MATRICE_PASCAL; ++i)
         for(int j = 0; j<DIM_MATRICE_PASCAL; ++j)
             //Riempi righe e colonne della matrice
             matricePascal[i][j] = (fattoriale(i+j-2) / (fattoriale(i-1) * fattoriale(j-1)));
-    }
-
+    
     return matricePascal;
 }
 
 //Funzione ausiliaria per creare ed inizializzare la matrice triangolare
-vector<vector<int>> defMatriceTriangolare() {
+vector<vector<float>> defMatriceTriangolare() {
     //utilizziamo il numero matricola di MARCO
     string nMatr = MARCO;
 
@@ -64,12 +74,9 @@ vector<vector<int>> defMatriceTriangolare() {
 
     //definisci la dimensione della matrice come definito nel PDF
     int DIM_MATRICE_TRIANGOLARE = 10*(d1+1)+d0;
-    vector<vector<int>> matriceTriangolare(DIM_MATRICE_TRIANGOLARE);
+    vector<vector<float>> matriceTriangolare(DIM_MATRICE_TRIANGOLARE, vector<float>(DIM_MATRICE_TRIANGOLARE));
 
-    for(int i = 0; i < DIM_MATRICE_TRIANGOLARE; ++i){
-        //inizializza la riga i
-        matriceTriangolare[i] = vector<int>(DIM_MATRICE_TRIANGOLARE);
-
+    for(int i = 0; i < DIM_MATRICE_TRIANGOLARE; ++i)
         //definisci gli elementi di tutta la matrice
         for(int j = 0; j < DIM_MATRICE_TRIANGOLARE; ++j)
             if(i == j)
@@ -78,20 +85,19 @@ vector<vector<int>> defMatriceTriangolare() {
                 matriceTriangolare[i][j] = -1;
             else
                 matriceTriangolare[i][j] = 0;
-    }
 
     return matriceTriangolare;
 } 
 
 //norma infinito definita come il max tra le norme dei vettori della matrice quadrata.
-double normaInfinito(vector<vector<int>> matrice) {
-    double normaInf;
+float normaInfinito(vector<vector<float>> matrice) {
+    float normaInf;
 
     //per ogni vettore:
     for(unsigned int i = 0; i<matrice.size(); ++i){
         //variabile che contiene la somma di tutti gli elementi
         //del vettore i.
-        double sommaElementiVettoreI = 0;
+        float sommaElementiVettoreI = 0;
 
         //per ogni elemento del vettore i aggiungi il suo elevamento alla seconda
         for(unsigned int j = 0; j<matrice.size(); ++j)
@@ -99,7 +105,7 @@ double normaInfinito(vector<vector<int>> matrice) {
         
         //se la norma i è la prima o è maggiore della norma 
         //infinito trovata fin'ora:
-        double normaVettoreI = sqrt(sommaElementiVettoreI);
+        float normaVettoreI = sqrt(sommaElementiVettoreI);
         if(i == 0 || normaVettoreI > normaInf)
             normaInf = normaVettoreI;
     }
@@ -107,7 +113,7 @@ double normaInfinito(vector<vector<int>> matrice) {
     return normaInf;
 }
 
-void es1(vector<vector<int>> matrice1, vector<vector<int>> matrice2, vector<vector<int>> matricePascal, vector<vector<int>> matriceTriangolare) 
+void es1(vector<vector<float>> matrice1, vector<vector<float>> matrice2, vector<vector<float>> matricePascal, vector<vector<float>> matriceTriangolare) 
 {
 
     cout << "\n--------------------------ESERCIZIO 1--------------------------\n";
@@ -126,87 +132,232 @@ void es1(vector<vector<int>> matrice1, vector<vector<int>> matrice2, vector<vect
     cout << "Norma Infinito della matrice triangolare: " << normaInfinito(matriceTriangolare) << "\n";
 }
 
-//A è la matrice in input.
-//Questa funzione ritorna il termine noto b
-vector<float> riduzioneGauss(vector<vector<int>> A){
-    const int DIM = A.size();
-    vector<float> b(DIM);
+//------------------------------------------------------------------------
+//------------------------------ESERCIZIO 2-------------------------------
+//------------------------------------------------------------------------
 
-    //RIDUZIONE
-    double mik; vector<float> kcolonna; int kmax;
-     
-    for(int k=1; k < DIM; k++){
-        for(int h = k; h <= DIM; h++){
-            kcolonna[h]=A[h][k];
-            
-            //cerca il pivot
-            double maxmodulo=fabs(kcolonna[k]);
-    
-            int imax=k;
-            
-            for(int i=k+1; i< DIM; i++)
-                if(!maxmodulo)
-                    exit (1);
-            
-            kmax = imax;
+//Funzione che calcola e ritorna il termine noto del sistema Ax = b con x = {1, ..., 1}.
+vector<float> calcolaB(vector<vector<float>> A) {
+	// numeroR_A è il numero di Righe della matrice A
+	unsigned int numeroR_A = A.size();
+    // numeroC_A è il numero di Colonne della matrice A
+	unsigned int numeroC_A = A[0].size(); 
+	
+	vector<float> b(numeroR_A); // Inizializzazione di b
 
-            
-            if(kmax!=k){
-                double aux;
-     
-                for(int j=k; j< DIM; j++){
-                    aux=A[j][k];
-        
-                    A[j][k]=A[j][kmax];
-        
-                    A[j][kmax]=aux;
-                }
-            };                               
-        }
-    
-        for(int i = k+1; i < DIM; i++){
-            mik=A[i][k]/A[k][k];
-            
-            for(int j = k+1; j < DIM; j++)
-                A[i][j]=A[i][j]-mik*A[k][j];
-            
-            b[i]=b[i]-mik*b[k];
-        }
-    }
+	//Scansione della matrice A per il calcolo del vettore b:
+    //  dato che x = {1, ..., 1}, per trovare il termine noto dell'equazione avente come 
+    //  coefficienti i valori alla riga i della matrice A, basta sommare questi valori tra loro
+	for(unsigned int i = 0; i < numeroR_A; ++ i)
+		for(unsigned int j = 0; j < numeroC_A; ++ j)
+			b[i] += A[i][j]; 
+	
+	return b;
+}
 
-    return b;
+//Funzione che fa il merge di una matrice A e un vettore b
+vector<vector<float>> merge(vector<vector<float>> A, vector<float> b) {
+
+    //numeroR_A è il numero di righe della matrice A e del vettore b
+	unsigned int numeroR_A = A.size(); 
+	vector<vector<float>> matriceFinale = A;
+
+	for(unsigned int i = 0; i < numeroR_A; ++ i)
+		matriceFinale[i].push_back(b[i]);
+		
+	return matriceFinale;
+}
+
+//Funzione che effetua il pivoting parziale dove: 
+//  A è la matrice sulla quale si effettua il pivoting parziale
+//  b è il vettore dei termini noti sul quale si effettua il pivoting parziale
+//  k è la riga presa in considerazione per l'esecuzione del pivoting parziale
+void pivotingParziale(vector<vector<float>>& A, vector<float>& b, unsigned int k) {
+
+	//i_max contiene la riga avente pivot di modulo massimo se scambiata con la riga k;
+    //inizialmente tale riga è proprio k
+	unsigned int i_max = k;	
+
+    //numeroR_A è il numero di righe della matrice A e del vettore b
+	unsigned int numeroR_A = A.size(); 
+	
+	//Scansione di tutti i valori sulla colonna k e sulle righe i > k
+	for(unsigned int i = k+1; i < numeroR_A; ++ i)
+        //se A[i][k] (valore corrente) è maggiore del pivot di massimo modulo corrente, 
+        //allora A[i][k] diventa il nuovo pivot di massimo modulo corrente
+		if(abs(A[i][k]) > abs(A[i_max][k])) 
+			i_max = i;
+	
+	//Se è stata trovata una riga, diversa da k, avente pivot di modulo maggiore (e massimo) 
+    //se scambiata con la riga k, allora viene effettuato tale scambio
+	if(k != i_max) {
+		//scambio dei valori interessati all'interno del vettore b dei termini noti
+		swap(b[i_max], b[k]);
+		
+		//scambio delle righe interessate all'interno della matrice A
+		swap(A[i_max], A[k]);
+	}	
+}
+
+
+//Funzione che esegue l'Eliminazione Gaussiana sulla matrice A e 
+//il vettore b dei termini noti
+vector<vector<float>> Gauss(vector<vector<float>> A, vector<float> b) {
+
+	float pivot;
+
+    // Fattore moltiplicativo
+	float m; 
+	
+    //numeroR_A è il numero di righe della matrice A e del vettore b
+	unsigned int numeroR_A = A.size(); 
+    //numeroC_A è il numero di colonne della matrice A
+	unsigned int numeroC_A = A[0].size(); 
+	
+    //Variabile che conterrà la matrice A ridotta
+	vector<vector<float>> ridotta_A = A; 
+    //Variabile che conterrà il vettore b ridotto
+	vector<float> ridotta_B = b; 
+
+	//Algoritmo di Eliminazione Gaussiana
+	for(unsigned int k = 0; k < numeroR_A-1; ++ k) {
+
+		//Esecuzione del pivoting parziale, per essere sicuri di avere il pivot 
+        //modulo più grande possibile e diverso da zero
+		pivotingParziale(ridotta_A, ridotta_B, k);
+		
+		//Assegnazione del pivot
+		pivot = ridotta_A[k][k];
+		
+		//Azzeramento dei valori sotto al pivot e conseguente modifica delle loro righe
+		for(unsigned int i = k+1; i < numeroR_A; ++ i) {
+			
+			//Calcolo del fattore moltiplicativo
+			m = ridotta_A[i][k] / pivot;
+			
+			//Modifica di b
+			ridotta_B[i] = ridotta_B[i] - m*ridotta_B[k];
+			
+			//Modifica della riga i
+			for(unsigned int j = k; j < numeroC_A; ++ j)
+				ridotta_A[i][j] = ridotta_A[i][j] - m*ridotta_A[k][j];
+		}
+	}
+	
+	//ritorna l'unione di A e b ridotti per avere un'unica matrice ridotta A|b
+	return merge(ridotta_A, ridotta_B);
+}
+
+//Funzione che divide una matrice A dal vettore b e lo ritorna
+vector<float> dividi(vector<vector<float>>& A) {
+
+    //numeroR_A è il numero di righe della matrice A e del vettore b
+	unsigned int numeroR_A = A.size(); 
+	vector<float> b(numeroR_A);
+
+	for(unsigned int i = 0; i < numeroR_A; ++ i) {
+		b[i] = A[i].back();
+		A[i].pop_back();
+	}
+		
+	return b;
+}
+
+
+//Funzione che esegue la sostituzione all'indietro sulla matrice A e il vettore b 
+//dei termini noti (entrambi ridotti)
+vector<float> sostituzioneIndietro(vector<vector<float>> A) {
+
+    //Dividi A da b in A|b ridotta
+	vector<float> b = dividi(A); 
+	
+    //numeroR_A è il numero di righe della matrice A e del vettore b
+	unsigned int numeroR_A = A.size();
+    //numeroC_A è il numero di colonne della matrice A 
+	unsigned int numeroC_A = A[0].size(); 
+	
+    //il vettore x conterrà le soluzioni del sistema
+	vector<float> x(numeroR_A); 
+
+	//Scansione di tutte le righe della matrice a partire dall'ultima
+	for(int i = numeroR_A - 1; i >= 0; --i) {
+		
+		//Inizializzazione del termine noto dell'equazione
+		float local_b = b[i];
+
+        //Per ogni j > i nella riga corrente, è stata trovata la soluzione x[j].
+        //Di conseguenza il termine noto dell'equazione corrente si ottiene sottraendo 
+        //a b[i] tutte x[j] note moltiplicate per i rispettivi coefficienti A[i][j]
+		for(int j = numeroC_A - 1; j > i; --j) 
+			local_b -= A[i][j]*x[j];     
+		
+        //Finito il ciclo, si è arrivati nella posizione i, quella per la quale manca la soluzione x[i];
+        //quest'ultima viene quindi trovata facendo il rapporto tra il termine noto ricavato sopra e il coefficiente di x[i]
+		x[i] = local_b/A[i][i];			
+	}	
+	
+	return x;		
+}
+
+//calcola e stampa i vari punti dell'es 2
+void es2_singolaMatrice(vector<vector<float>> A) {
+
+	//Calcolo del termine noto del sistema Ax = b con x = {1 ... 1}
+	vector<float> b = calcolaB(A);
+	
+	cout << "Il termine noto è: " << endl;
+	printVettore(b);
+	
+	//Risoluzione del sistema Ax = b (perturbato)
+	vector<vector<float>> reduced_Ab = Gauss(A, b);
+	
+	//Stampa di A|b ridotta
+	cout << "\nLa riduzione Gaussiana è: " << endl;
+	
+	printMatrice(reduced_Ab);
+	
+	//Sostituzione all'indietro per ricavare il vettore delle soluzioni x
+	vector<float> x = sostituzioneIndietro(reduced_Ab);
+	
+	cout << "x è uguale a:" << endl;
+	printVettore(x);
 }
 
 //Funzione del secondo esercizio
-void es2(vector<vector<int>> matrice1, vector<vector<int>> matrice2, vector<vector<int>> matricePascal, vector<vector<int>> matriceTriangolare) 
+void es2(vector<vector<float>> matrice1, vector<vector<float>> matrice2, vector<vector<float>> matricePascal, vector<vector<float>> matriceTriangolare) 
 {
-
     cout << "\n--------------------------ESERCIZIO 2--------------------------\n";
 
-    //--------------------------PARTE 1, 2 e 3--------------------------
-
-    cout << "Eliminazione di Gauss della matrice1: ";
-    printTermineNoto(riduzioneGauss(matrice1));
-
-    cout << "\nEliminazione di Gauss della matrice2: ";
-    printTermineNoto(riduzioneGauss(matrice2));
-    
-    cout << "\nEliminazione di Gauss della matrice di Pascal: ";
-    printTermineNoto(riduzioneGauss(matricePascal));
-
-    cout << "\nEliminazione di Gauss della matrice triangolare: ";
-    printTermineNoto(riduzioneGauss(matriceTriangolare));
+    //esegui l'es2 per ogni matrice
+    cout << "\n-- Matrice 1" << endl;
+    es2_singolaMatrice(matrice1);
+    cout << "\n-- Matrice 2" << endl;
+    es2_singolaMatrice(matrice2);
+    cout << "\n-- Matrice di Pascal" << endl;
+    es2_singolaMatrice(matricePascal);
+    cout << "\n-- Matrice Triangolare" << endl;
+    es2_singolaMatrice(matriceTriangolare);
 }
 
 int main() {
 
     //Definizione ed inizializzazione delle prime due matrici
-    vector<vector<int>> matrice1{{3, 0, 0, 0}, {1, 7, -3, 0}, {-1, -3, 9, 4}, {0, 0, -2, -10}};
-    vector<vector<int>> matrice2{{2, 1, 3, 0}, {4, 3, -1, -1}, {-2, 0, 1, 2}, {0, 1, 2, 1}};
+    vector<vector<float>> matrice1{{3, 0, 0, 0}, {1, 7, -3, 0}, {-1, -3, 9, 4}, {0, 0, -2, -10}};
+    vector<vector<float>> matrice2{{2, 1, 3, 0}, {4, 3, -1, -1}, {-2, 0, 1, 2}, {0, 1, 2, 1}};
 
     //Definizione ed inizializzazione delle due matrici create dalle funzioni ausiliarie
-    vector<vector<int>> matricePascal = defMatricePascal();
-    vector<vector<int>> matriceTriangolare = defMatriceTriangolare();
+    vector<vector<float>> matricePascal = defMatricePascal();
+    vector<vector<float>> matriceTriangolare = defMatriceTriangolare();
+
+    //Stampa tutte le matrici
+    cout << "Le matrici analizzate:\n--Matrice 1:\n";
+    printMatrice(matrice1);
+    cout << "\n--Matrice 2:\n";
+    printMatrice(matrice2);
+    cout << "\n--Matrice di Pascal:\n";
+    printMatrice(matricePascal);
+    cout << "\n--Matrice Triangolare:\n";
+    printMatrice(matriceTriangolare);
 
     //esegui il primo esercizio
     es1(matrice1, matrice2, matricePascal, matriceTriangolare);

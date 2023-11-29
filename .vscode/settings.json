@@ -6,6 +6,8 @@
         "sstream": "c",
         "ratio": "c",
         "cmath": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "ostream": "cpp",
+        "iomanip": "cpp"
     }
 }
