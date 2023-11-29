@@ -312,7 +312,7 @@ void es2_singolaMatrice(vector<vector<float>> A) {
 	vector<vector<float>> reduced_Ab = Gauss(A, b);
 	
 	//Stampa di A|b ridotta
-	cout << "\nLa riduzione Gaussiana è: " << endl;
+	cout << "\nLa riduzione di Gauss è: " << endl;
 	
 	printMatrice(reduced_Ab);
 	
@@ -339,6 +339,92 @@ void es2(vector<vector<float>> matrice1, vector<vector<float>> matrice2, vector<
     es2_singolaMatrice(matriceTriangolare);
 }
 
+
+//------------------------------------------------------------------------
+//------------------------------ESERCIZIO 3-------------------------------
+//------------------------------------------------------------------------
+
+//per info, guarda la funzione normaInfinito dell'es 1 (questa è una semplificazione)
+float normaInfinitoVettore(vector<float> vettore) {
+    float normaInf;
+
+    //per ogni elemento del vettore:
+    for(unsigned int i = 0; i<vettore.size(); ++i)
+        if(i == 0 || fabs(vettore[i]) > normaInf)
+            normaInf = fabs(vettore[i]);
+
+    return normaInf;
+}
+
+
+//Funzione che calcola e ritorna il vettore dei termini noti b perturbato
+vector<float> termNoti_BP(vector<vector<float>> A) {
+	
+    //numeroR_A è il numero di righe della matrice A e del vettore b
+	unsigned int numeroR_A = A.size(); 
+	
+	//Calcolo del termine noto
+	vector<float> b = calcolaB(A);
+	
+	//Calcolo della norma infinito di b
+	float normInf_b = normaInfinitoVettore(b);
+
+	//Questo è il vettore "che perturba"
+	vector<float> deltaB(numeroR_A);
+	
+	for(unsigned int i = 0; i < numeroR_A; ++i)
+		if(i%2 == 0)
+			deltaB[i] = -0.01 * normInf_b;
+		else
+			deltaB[i] = 0.01 * normInf_b; 	
+	
+	for(unsigned int i = 0; i < numeroR_A; ++ i)
+		b[i] += deltaB[i];
+
+	return b;	
+}
+
+//Esegui l'es 3 su una singola matrice
+void es3_singolaMatrice(vector<vector<float>> A) {
+
+	//Calcolo del vettore dei termini noti b perturbato
+	vector<float> b = termNoti_BP(A);
+	
+	//Risoluzione del sistema Ax = b (perturbato)
+	vector<vector<float>> ridotta = Gauss(A, b);
+	
+	cout << "La riduzione di Gauss è: " << endl;
+	printMatrice(ridotta);
+	
+	//Calcolo del vettore delle soluzioni
+	vector<float> x = sostituzioneIndietro(ridotta);
+	
+	cout << "x è uguale a:" << endl;
+	printVettore(x);
+}
+
+//esegui l'esercizio 3
+void es3(vector<vector<float>> matrice1, vector<vector<float>> matrice2, vector<vector<float>> matricePascal, vector<vector<float>> matriceTriangolare) {
+	
+    cout << "\n--------------------------ESERCIZIO 3--------------------------\n";
+
+    //esegui l'es2 per ogni matrice
+    cout << "\n-- Matrice 1" << endl;
+	es3_singolaMatrice(matrice1);
+	cout << "\n-- Matrice 2" << endl;
+	es3_singolaMatrice(matrice2);
+	cout << "\n-- Matrice Pascal" << endl;
+	es3_singolaMatrice(matricePascal);
+	cout << "\n-- Matrice Triangolare" << endl;
+	es3_singolaMatrice(matriceTriangolare);
+}
+
+
+
+//-----------------------------------------------------------------------
+//---------------------------------MAIN----------------------------------
+//-----------------------------------------------------------------------
+
 int main() {
 
     //Definizione ed inizializzazione delle prime due matrici
@@ -364,6 +450,9 @@ int main() {
 
     //esegui il secondo esercizio
     es2(matrice1, matrice2, matricePascal, matriceTriangolare);
+
+    //esegui il terzo esercizio
+    es3(matrice1, matrice2, matricePascal, matriceTriangolare);
 
     return 0;
 }
