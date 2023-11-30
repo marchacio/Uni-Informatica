@@ -66,8 +66,7 @@ void run_file(const int *p_to_file, const int *p_from_file)
 	exit(-1);
 }
 
-void run_webserver(const char *const port_as_str, char *www_root, const int *const p_to_file,
-		   const int *const p_from_file)
+void run_webserver(const char *const port_as_str, char *www_root, const int *const p_to_file, const int *const p_from_file)
 {
 	int i;
 
@@ -81,6 +80,11 @@ void run_webserver(const char *const port_as_str, char *www_root, const int *con
 
 /*** TO BE DONE 7.0 START ***/
 
+	create_listening_socket(port_as_str);
+
+#ifndef PRETEND_TO_BE_ROOT
+	drop_privileges();
+#endif
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -114,6 +118,13 @@ void run_webserver(const char *const port_as_str, char *www_root, const int *con
 		/*** create PTHREAD number i, running client_connection_thread() ***/
 /*** TO BE DONE 7.0 START ***/
 
+		perror("evvia");
+
+		if(pthread_create(&thread_ids[i], 0, client_connection_thread(&i), 0)){
+			fail("Errore nella pthread_create");
+		}
+
+		perror("comunisti");
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -121,6 +132,7 @@ void run_webserver(const char *const port_as_str, char *www_root, const int *con
 	for (i = 0; i < MAX_CONNECTIONS; i++)
 		if (pthread_join(thread_ids[i], NULL))
 			fail_errno("Could not join thread");
+			
 	if (close(listen_fd))
 		fail_errno("Cannot close listening socket");
 	if (fclose(mime_request_stream))
@@ -171,13 +183,14 @@ int main(int argc, char **argv)
 	www_root = getcwd(NULL, 0);
 	if (!www_root)
 		fail_errno("Cannot get current directory");
+
 	pid = fork();
 	if (pid < 0)
 		fail_errno("Cannot fork");
 	if (pid == 0)
 		run_file(p_to_file, p_from_file);
-            else
-	        run_webserver(port_as_str, www_root, p_to_file, p_from_file);
+	else
+		run_webserver(port_as_str, www_root, p_to_file, p_from_file);
 	return EXIT_SUCCESS;
 }
 

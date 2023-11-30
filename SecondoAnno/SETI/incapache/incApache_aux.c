@@ -69,27 +69,33 @@ ssize_t send_all(int fd, const char *ptr, size_t n, int flags)
 
 static pthread_mutex_t my_timegm_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+//funzione che prende un local time e lo converte in una rappresentazione "calendaria" 
 time_t my_timegm(struct tm *tm)
 {
 	time_t ret;
-	char *tz;
+	char *timeZone;
 
 /*** TO BE DONE 7.0 START ***/
 
+	timeZone = my_malloc((sizeof(char))*3);
+	strcpy(timeZone, "IT");
+	
+	//TODO controlla che funzioni sta merda
 
 /*** TO BE DONE 7.0 END ***/
 
-	setenv("TZ", "", 1);
-	tzset();
+	setenv("TZ", "", 1); 	//crea la var d'ambiente TZ (nel caso esista gia, la sovrascrive)
+	tzset(); 				//inizializza TZ
 	ret = mktime(tm);
-	if (tz) {
-		setenv("TZ", tz, 1);
-		free(tz);
+	if (timeZone) {
+		setenv("TZ", timeZone, 1);
+		free(timeZone);
 	} else
 		unsetenv("TZ");
 
 /*** TO BE DONE 7.0 START ***/
 
+	free(timeZone);
 
 /*** TO BE DONE 7.0 END ***/
 
