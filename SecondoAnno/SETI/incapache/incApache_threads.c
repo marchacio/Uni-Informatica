@@ -182,6 +182,25 @@ char *get_mime_type(char *filename)
 	/*** What is missing here to avoid race conditions ? ***/
 /*** TO BE DONE 7.0 START ***/
 
+	/*
+		Dalle slide:
+		Quando si hanno più flussi di esecuzione, si parla di race condition
+		quando il risultato finale dipende dalla temporizzazione o dall’ordine
+		con cui vengono schedulati.
+			- La computazione è non-deterministica
+			- Per esempio, si ha una race-condition quando più thread eseguono (più
+			  o meno allo stesso tempo) una sezione critica.
+
+		Per evitare questi problemi, serve sincronizzazione fra i thread
+		alle volte, anche di processi diversi.
+
+		Esistono tante primitive di sincronizzazione, ... usiamo solo le primitive per la mutua esclusione:
+		pthread_mutex_lock e pthread_mutex_unlock
+	*/
+
+	//introduci un lock mutex sul thread
+	pthread_mutex_lock(&mime_mutex);
+
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -194,6 +213,8 @@ char *get_mime_type(char *filename)
 	/*** What is missing here to avoid race conditions ? ***/
 /*** TO BE DONE 7.0 START ***/
 
+	//rilascia il lock mutex dal thread
+	pthread_mutex_unlock(&mime_mutex);
 
 /*** TO BE DONE 7.0 END ***/
 

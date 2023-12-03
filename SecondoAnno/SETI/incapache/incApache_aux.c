@@ -80,7 +80,7 @@ time_t my_timegm(struct tm *tm)
 	timeZone = my_malloc((sizeof(char))*3);
 	strcpy(timeZone, "IT");
 	
-	//TODO controlla che funzioni sta merda
+	//TODO controlla che funzioni sta roba
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -96,6 +96,7 @@ time_t my_timegm(struct tm *tm)
 /*** TO BE DONE 7.0 START ***/
 
 	free(timeZone);
+	//TODO controlla che funzioni sta roba
 
 /*** TO BE DONE 7.0 END ***/
 
