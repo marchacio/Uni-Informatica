@@ -77,6 +77,8 @@ time_t my_timegm(struct tm *tm)
 
 /*** TO BE DONE 7.0 START ***/
 
+	pthread_mutex_lock(&my_timegm_mutex);
+
 	timeZone = my_malloc((sizeof(char))*3);
 	strcpy(timeZone, "IT");
 	
@@ -95,8 +97,7 @@ time_t my_timegm(struct tm *tm)
 
 /*** TO BE DONE 7.0 START ***/
 
-	free(timeZone);
-	//TODO controlla che funzioni sta roba
+	pthread_mutex_unlock(&my_timegm_mutex);
 
 /*** TO BE DONE 7.0 END ***/
 

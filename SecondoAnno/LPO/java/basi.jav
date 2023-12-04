@@ -206,6 +206,30 @@ public class TimerClass implements Timer { // TimerClass ≤ Timer
 //       possono essere inizializzate.
 
 
+//-------------------------------------------------------
+//-----------------ESTENSIONI DI CLASSI------------------
+//-------------------------------------------------------
+//
+//Data una classe C, essa può essere "estesa" (aggiungendo
+//metodi e dati) con la parola "extends".
+//L'esempio seguente è fatto con le interfacce:
+public interface Timer {
+    boolean isRunning();
+    int getTime();
+    void tick();
+    int reset(int minutes);
+}
+
+public interface StoppableTimer extends Timer {
+    boolean stopped();
+    void stop();
+    void restart();
+}
+
+//In questo esempio StoppableTimer ha dei metodi in più di Timer.
+//L'estensione può avvenire anche tra classi, non per forza interfacce.
+
+
 //---------------------------------------------
 //--------------------ARRAY--------------------
 //---------------------------------------------
