@@ -296,10 +296,22 @@ void send_response(int client_fd, int response_code, int cookie,
 		/*** send fd file on client_fd, then close fd; see syscall sendfile  ***/
 /*** TO BE DONE 7.0 START ***/
 
+/*DAL MAN:
+If  the transfer was successful, the number of bytes written to out_fd is returned.  
+Note that a successful call to sendfile() may write fewer bytes than requested; 
+the caller  should  be  prepared  to retry the call if there were unsent bytes.
+
+On error, -1 is returned, and errno is set appropriately
+*/
 		retry:
-		if(sendfile(client_fd, fd, NULL, file_size) < file_size){
-			perror("Riprova");
-			goto retry;
+		int sent_bytes = sendfile(client_fd, fd, NULL, file_size);
+		if(sent_bytes < file_size){
+			if(sent_bytes == -1) 
+				fail_errno("Failed sendfile");
+			else {
+				perror("Riprova");
+				goto retry;
+			} 
 		}
 
 		close(fd);

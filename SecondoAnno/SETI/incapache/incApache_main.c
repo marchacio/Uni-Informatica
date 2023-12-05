@@ -118,13 +118,9 @@ void run_webserver(const char *const port_as_str, char *www_root, const int *con
 		/*** create PTHREAD number i, running client_connection_thread() ***/
 /*** TO BE DONE 7.0 START ***/
 
-		perror("evvia");
-
 		if(pthread_create(&thread_ids[i], 0, client_connection_thread(&i), 0)){
 			fail("Errore nella pthread_create");
 		}
-
-		perror("comunisti");
 
 /*** TO BE DONE 7.0 END ***/
 

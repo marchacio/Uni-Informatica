@@ -79,8 +79,7 @@ time_t my_timegm(struct tm *tm)
 
 	pthread_mutex_lock(&my_timegm_mutex);
 
-	timeZone = my_malloc((sizeof(char))*3);
-	strcpy(timeZone, "IT");
+	timeZone = "IT";
 	
 	//TODO controlla che funzioni sta roba
 

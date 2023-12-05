@@ -4,10 +4,10 @@ CFLAGS= -DHTML_301='"301_Moved_Permanently.html"' \
         -DHTML_404='"404_Not_Found.html"' \
         -DHTML_500='"500_Internal_Error.html"' \
         -DHTML_501='"501_Method_Not_Implemented.html"' \
-	-DDEBUG \
-	# -DINCaPACHE_7_1
-	# -DPRETEND_TO_BE_ROOT \
-	# -g3 -O0 -Wall -pedantic \
+		-DDEBUG \
+		# -DINCaPACHE_7_1
+		# -DPRETEND_TO_BE_ROOT \
+		-g3 -O0 -Wall -pedantic \
         -DIMAGE='"uncadunca.jpg"' \
         -DSTYLE='"000_style.css"'
 OBJS=incApache_aux.o incApache_http.o incApache_main.o incApache_threads.o
