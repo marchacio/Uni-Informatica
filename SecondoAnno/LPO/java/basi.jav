@@ -206,9 +206,9 @@ public class TimerClass implements Timer { // TimerClass ≤ Timer
 //       possono essere inizializzate.
 
 
-//-------------------------------------------------------
-//-----------------ESTENSIONI DI CLASSI------------------
-//-------------------------------------------------------
+//-----------------------------------------------------------
+//-----------------EREDITARIETA' TRA CLASSI------------------
+//-----------------------------------------------------------
 //
 //Data una classe C, essa può essere "estesa" (aggiungendo
 //metodi e dati) con la parola "extends".
@@ -227,7 +227,37 @@ public interface StoppableTimer extends Timer {
 }
 
 //In questo esempio StoppableTimer ha dei metodi in più di Timer.
-//L'estensione può avvenire anche tra classi, non per forza interfacce.
+//L'ereditarietà può avvenire anche tra classi, non per forza interfacce 
+//con una piccola differenza:
+//l'eredità tra classi è SINGOLA (una classe può essere l'estensione di 
+//solo un'altra classe) mentre l'ereditarietà tra interfacce è MULTIPLA.
+
+//--------------PROTECTED--------------
+//Con l'ereditarietà bisogna introdurre un nuovo modificatore d'accesso:
+protected int time = 60;
+//grazie a "protected", il campo "time" è come se fosse private ma accessibile
+//dalle sottoclassi, ovvero tutte le classi che estendono la classe contenente time.
+
+//--------------OVERRIDE--------------
+//Con l'ereditarietà bisogna anche aggiungere il concetto di override:
+@Override
+public boolean isRunning() {...}
+//con la parola "Override" si sovrascrive il metodo isRunning definito dalla 
+//classe superiore rispetto alla classe che esegue l'override (ovvero la classe figlia).
+
+//--------------SUPER--------------
+//"super.method()" è una chiamata diretta al metodo "method()" della classe madre.
+//Ovviamente fa riferimento all'istanza dell'oggetto "this".
+//Si chiama super perche in gergo la classe madre è chiamata SUPERCLASSE.
+public class StoppableTimerClass extends TimerClass {
+    ...
+    @Override
+    public boolean isRunning() {
+        // calls ’isRunning’ of ’TimerClass’ on target object ’this’
+        return super.isRunning() && !this.stopped();
+    }
+    ...
+}
 
 
 //---------------------------------------------
