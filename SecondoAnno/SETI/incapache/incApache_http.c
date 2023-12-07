@@ -50,7 +50,7 @@ int get_new_UID(void)
 
 	pthread_mutex_lock(&cookie_mutex);
 
-	retval = CurUID % MAX_COOKIES;
+	retval = CurUID++ % MAX_COOKIES;
 	UserTracker[retval] = 0;
 
 	pthread_mutex_unlock(&cookie_mutex);
@@ -234,7 +234,7 @@ void send_response(int client_fd, int response_code, int cookie,
 		/*** set permanent cookie in order to identify this client ***/
 /*** TO BE DONE 7.0 START ***/
 
-		strcat(http_header, "\r\nCookie: ");
+		strcat(http_header, "\r\nSet-Cookie: ");
 		
 		//Converti il numero di cookie in stringa
 		//Dato che MAX_COOKIES è 256 con 3 cifre, imposta
@@ -309,7 +309,7 @@ On error, -1 is returned, and errno is set appropriately
 			if(sent_bytes == -1) 
 				fail_errno("Failed sendfile");
 			else {
-				perror("Riprova");
+				perror("----ATTENZIONE: Non tutti i byte sono stati inviati: riprovo\n");
 				goto retry;
 			} 
 		}
@@ -422,8 +422,22 @@ void manage_http_requests(int client_fd
 				/*** parse the cookie in order to get the UserID and count the number of requests coming from this client ***/
 /*** TO BE DONE 7.0 START ***/
 
-					//converti la stringa dell'id del cookie in int
-					UIDcookie = atoi(strtokr_save);
+					//converti la stringa dell'id del cookie in int.
+					//atoi è thread safety.
+					char* cookie_str = strtok_r(NULL, "\r\n", &strtokr_save);
+					if(cookie_str[0] == ' ')
+						cookie_str++; //salta primo carattere vuoto
+
+					UIDcookie = atoi(cookie_str);
+
+					//controlla che il cookie ottenuto abbia senso e
+					//sia diverso da zero in quanto atoi ritorna 0 quando avviene
+					//un errore (per essere un errore, bisogna che strtokr_save != "0").
+					if(UIDcookie < 0 || UIDcookie >= 256 
+						|| (UIDcookie == 0 && (strcmp(cookie_str, "0") != 0))){
+						debug("ERRORE: errore nella lettura del cookie (dev'essere >= 0 e < 256. Controlla anche la formattazione).\n");
+						break;
+					}
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -463,18 +477,19 @@ void manage_http_requests(int client_fd
 			}
 		}
 		free(http_option_line);
-			if ( UIDcookie >= 0 ) { /*** increment visit count for this user ***/
-				int current_visit_count = keep_track_of_UID(UIDcookie);
 
-				if ( current_visit_count < 0 ) /*** wrong Cookie value ***/
+		if ( UIDcookie >= 0 ) { /*** increment visit count for this user ***/
+			int current_visit_count = keep_track_of_UID(UIDcookie);
 
-					UIDcookie = get_new_UID();
-				else {
-					printf("\n client provided UID Cookie %d for the %d time\n", UIDcookie, current_visit_count);
-					UIDcookie = -1;
-				}
-			} else /*** user did not provide any Cookie ***/
+			if ( current_visit_count < 0 ) /*** wrong Cookie value ***/
+
 				UIDcookie = get_new_UID();
+			else {
+				printf("\n client provided UID Cookie %d for the %d time\n", UIDcookie, current_visit_count);
+				UIDcookie = -1;
+			}
+		} else /*** user did not provide any Cookie ***/
+			UIDcookie = get_new_UID();
 
 /*** TO BE OPTIONALLY CHANGED START ***/
 		if (http_method == METHOD_NONE || http_method == METHOD_POST) {
