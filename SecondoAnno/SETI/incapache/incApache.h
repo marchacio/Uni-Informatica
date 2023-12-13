@@ -26,7 +26,7 @@
 #endif
 
 #define _XOPEN_SOURCE 500 /* glibc2 needs this */
-#define _BSD_SOURCE /* glibc2 needs this */
+#define _DEFAULT_SOURCE /* glibc2 needs this */ //TODO controlla che _DEFAULT_SOURCE funzioni al posto di _BSD_SOURCE
 #define _XOPEN_SOURCE_EXTENDED /* glibc2 needs this */
 
 #include <stdio.h>
@@ -111,7 +111,7 @@ extern void *client_connection_thread(void *vp);
 extern char *get_mime_type(char *filename);
 
 extern void send_response(int client_fd, int response_code, int cookie,
-#ifdef INCaPACHE_6_1
+#ifdef INCaPACHE_7_1
 			  int is_http1_0, int thread_no,
 #endif
 			  char *filename, struct stat *stat_p);

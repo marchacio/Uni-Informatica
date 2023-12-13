@@ -41,13 +41,19 @@ pthread_mutex_t cookie_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int get_new_UID(void)
 {
-    int retval;
+    int retval; //return value
 
     /*** Compute retval by incrementing CurUID mod MAX_COOKIES
      *** and reset UserTracker[retval] to 0.
      *** Be careful in order to avoid race conditions ***/
 /*** TO BE DONE 7.0 START ***/
 
+	pthread_mutex_lock(&cookie_mutex);
+
+	retval = CurUID++ % MAX_COOKIES;
+	UserTracker[retval] = 0;
+
+	pthread_mutex_unlock(&cookie_mutex);
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -65,6 +71,11 @@ int keep_track_of_UID(int myUID)
      *** Be careful in order to avoid race conditions ***/
 /*** TO BE DONE 7.0 START ***/
 
+	pthread_mutex_lock(&cookie_mutex);
+
+	newcount = UserTracker[myUID]++;
+
+	pthread_mutex_unlock(&cookie_mutex);
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -96,6 +107,9 @@ void send_response(int client_fd, int response_code, int cookie,
 	/*** Compute date of servicing current HTTP Request using a variant of gmtime() ***/
 /*** TO BE DONE 7.0 START ***/
 
+	//Utilizza una funzione rientrante per evitare problemi con i thread.
+	//gmtime_r prende il valore di now_t (è un time_t) e lo inserisce in now_tm (è una struct tm)
+	gmtime_r(&now_t, &now_tm);
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -130,6 +144,15 @@ void send_response(int client_fd, int response_code, int cookie,
 			/*** compute file_size and file_modification_time ***/
 /*** TO BE DONE 7.0 START ***/
 
+			//con il comando stat, ottieni le info sul file e le inserisce
+			//nel buffer stat_buffer
+			stat(filename, &stat_buffer);
+			
+			//ottieni le info dal buffer:
+			file_size = stat_buffer.st_size;
+
+			//file_modification_time è un time_t, che semplicemente contiene i secondi dall'epoca 
+			file_modification_time = (time_t)stat_buffer.st_mtim.tv_sec;
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -156,6 +179,17 @@ void send_response(int client_fd, int response_code, int cookie,
 			/*** compute file_size, mime_type, and file_modification_time of HTML_404 ***/
 /*** TO BE DONE 7.0 START ***/
 
+			//con il comando stat, ottieni le info sul file e le inserisce
+			//nel buffer stat_buffer
+			fstat(fd, &stat_buffer);
+			
+			//ottieni le info dal buffer:
+			file_size = stat_buffer.st_size;
+
+			//file_modification_time è un time_t, che semplicemente contiene i secondi dall'epoca 
+			file_modification_time = (time_t)stat_buffer.st_mtim.tv_sec;
+
+			mime_type = get_mime_type(HTML_404);
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -176,22 +210,42 @@ void send_response(int client_fd, int response_code, int cookie,
 			/*** compute file_size, mime_type, and file_modification_time of HTML_501 ***/
 /*** TO BE DONE 7.0 START ***/
 
+			//con il comando stat, ottieni le info sul file e le inserisce
+			//nel buffer stat_buffer
+			fstat(fd, &stat_buffer);
+			
+			//ottieni le info dal buffer:
+			file_size = stat_buffer.st_size;
+
+			//file_modification_time è un time_t, che semplicemente contiene i secondi dall'epoca 
+			file_modification_time = (time_t)stat_buffer.st_mtim.tv_sec;
+
+			mime_type = get_mime_type(HTML_501);
 
 /*** TO BE DONE 7.0 END ***/
 
 		}
 		break;
 	}
+
 	strcat(http_header, "\r\nDate: ");
 	strcat(http_header, time_as_string);
-        if ( cookie >= 0 ) {
-            /*** set permanent cookie in order to identify this client ***/
+	if ( cookie >= 0 ) {
+		/*** set permanent cookie in order to identify this client ***/
 /*** TO BE DONE 7.0 START ***/
 
+		strcat(http_header, "\r\nSet-Cookie: ");
+		
+		//Converti il numero di cookie in stringa
+		//Dato che MAX_COOKIES è 256 con 3 cifre, imposta
+		//la memoria della stringa a 4.
+		char cookie_s[4];
+		snprintf(cookie_s, 4, "%d", cookie);
+		strcat(http_header, cookie_s);
 
 /*** TO BE DONE 7.0 END ***/
 
-        }
+	}
 #ifdef INCaPACHE_7_1
 	strcat(http_header, "\r\nServer: incApache 7.1 for SETI.\r\n");
 	if (response_code >= 500 || is_http1_0)
@@ -207,6 +261,10 @@ void send_response(int client_fd, int response_code, int cookie,
 		     see gmtime and strftime ***/
 /*** TO BE DONE 7.0 START ***/
 
+		//gmtime_r prende il valore di file_modification_time (è un time_t) e 
+		//lo inserisce in file_modification_tm (è una struct tm)
+		gmtime_r(&file_modification_time, &file_modification_tm);
+		strftime(time_as_string, MAX_TIME_STR, "%a, %d %b %Y %T GMT", &file_modification_tm);
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -238,6 +296,25 @@ void send_response(int client_fd, int response_code, int cookie,
 		/*** send fd file on client_fd, then close fd; see syscall sendfile  ***/
 /*** TO BE DONE 7.0 START ***/
 
+/*DAL MAN:
+If  the transfer was successful, the number of bytes written to out_fd is returned.  
+Note that a successful call to sendfile() may write fewer bytes than requested; 
+the caller  should  be  prepared  to retry the call if there were unsent bytes.
+
+On error, -1 is returned, and errno is set appropriately
+*/
+		retry:
+		int sent_bytes = sendfile(client_fd, fd, NULL, file_size);
+		if(sent_bytes < file_size){
+			if(sent_bytes == -1) 
+				fail_errno("Failed sendfile");
+			else {
+				perror("----ATTENZIONE: Non tutti i byte sono stati inviati: riprovo\n");
+				goto retry;
+			} 
+		}
+
+		close(fd);
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -254,6 +331,7 @@ void send_response(int client_fd, int response_code, int cookie,
 }
 
 
+//questa è la prima funzione richiamata dal file incapache_threads.c
 void manage_http_requests(int client_fd
 #ifdef INCaPACHE_7_1
 		, int connection_no
@@ -274,7 +352,8 @@ void manage_http_requests(int client_fd
 	int http_method;
 	struct tm since_tm;
 	struct stat *stat_p;
-        int UIDcookie = -1;
+	int UIDcookie = -1;
+
 #ifdef INCaPACHE_7_1
 	int is_http1_0 = 0;
 	int thread_idx;
@@ -296,6 +375,13 @@ void manage_http_requests(int client_fd
 		 *** filename, and protocol ***/
 /*** TO BE DONE 7.0 START ***/
 
+		//definisci un delimitatore per separare la stringa
+		strtokr_save = http_request_line;
+
+		//utilizza strtok_r come piu avanti all'interno di questa funzione (strtok_r è thread safe).
+		method_str = strtok_r(http_request_line, " ", &strtokr_save);
+		filename = strtok_r(NULL, " ", &strtokr_save);
+		protocol = strtok_r(NULL, "\r\n", &strtokr_save); //qui bisogna eliminare il termine riga 
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -304,6 +390,7 @@ void manage_http_requests(int client_fd
 		if (method_str == NULL || filename == NULL || protocol == NULL ||
 		    filename[0] != '/' || strncmp(protocol, "HTTP/1.", 7) != 0 ||
 		    strlen(protocol) != 8) {
+
 			debug("       ... Bad Request!\n");
 			SEND_RESPONSE(client_fd, RESPONSE_CODE_BAD_REQUEST, UIDcookie,
 #ifdef INCaPACHE_7_1
@@ -332,40 +419,77 @@ void manage_http_requests(int client_fd
 			option_name = strtok_r(http_option_line, ": ", &strtokr_save);
 			if ( option_name != NULL ) {
 			    if ( strcmp(option_name, "Cookie") == 0 ) {
-                                /*** parse the cookie in order to get the UserID and count the number of requests coming from this client ***/
+				/*** parse the cookie in order to get the UserID and count the number of requests coming from this client ***/
 /*** TO BE DONE 7.0 START ***/
 
+					//converti la stringa dell'id del cookie in int.
+					//atoi è thread safety.
+					char* cookie_str = strtok_r(NULL, "\r\n", &strtokr_save);
+					if(cookie_str[0] == ' ')
+						cookie_str++; //salta primo carattere vuoto
+
+					UIDcookie = atoi(cookie_str);
+
+					//controlla che il cookie ottenuto abbia senso e
+					//sia diverso da zero in quanto atoi ritorna 0 quando avviene
+					//un errore (per essere un errore, bisogna che strtokr_save != "0").
+					if(UIDcookie < 0 || UIDcookie >= 256 
+						|| (UIDcookie == 0 && (strcmp(cookie_str, "0") != 0))){
+						debug("ERRORE: errore nella lettura del cookie (dev'essere >= 0 e < 256. Controlla anche la formattazione).\n");
+						break;
+					}
 
 /*** TO BE DONE 7.0 END ***/
 
-                            }
+				}
+
 			    if ( http_method == METHOD_GET ) {
 
 				/*** parse option line, recognize "If-Modified-Since" option,
-				 *** and possibly add METHOD_CONDITIONAL flag to http_method
-                                 *** and store date in since_tm
-                                 ***/
+			 	*** and possibly add METHOD_CONDITIONAL flag to http_method
+				*** and store date in since_tm***/
 /*** TO BE DONE 7.0 START ***/
 
+					if ( strcmp(option_name, "If-Modified-Since") == 0 ){
+
+						char* data = strtok_r(NULL, "\r\n", &strtokr_save);
+
+						//la data potrebbe iniziare con un carattere vuoto, saltalo
+						if (data[0] == ' ') data++;
+
+						//controlla la formattazione della data nella stringa,
+						//e inserisci la data nella variabile since_tm.
+						//
+						//per altre info sulla formattazione: 	https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Modified-Since
+						//										https://man7.org/linux/man-pages/man3/strptime.3.html
+						if (strptime(data, "%a, %d %b %Y %H:%M:%S GMT", &since_tm) == NULL) {				
+							printf("\nERRORE: Data formattata in modo errato!\n");
+							break; //esci dal loop
+						}
+
+						//aggiungi METHOD_CONDITIONAL a http_method tramite le operazioni bit-a-bit
+						http_method |= METHOD_CONDITIONAL;
+					}
 
 /*** TO BE DONE 7.0 END ***/
 
 			    }
-                        }
+			}
 		}
 		free(http_option_line);
-                if ( UIDcookie >= 0 ) { /*** increment visit count for this user ***/
-                    int current_visit_count = keep_track_of_UID(UIDcookie);
 
-                    if ( current_visit_count < 0 ) /*** wrong Cookie value ***/
+		if ( UIDcookie >= 0 ) { /*** increment visit count for this user ***/
+			int current_visit_count = keep_track_of_UID(UIDcookie);
 
-                        UIDcookie = get_new_UID();
-                    else {
-			printf("\n client provided UID Cookie %d for the %d time\n", UIDcookie, current_visit_count);
-                        UIDcookie = -1;
-                    }
-                } else /*** user did not provide any Cookie ***/
-                    UIDcookie = get_new_UID();
+			if ( current_visit_count < 0 ) /*** wrong Cookie value ***/
+
+				UIDcookie = get_new_UID();
+			else {
+				printf("\n client provided UID Cookie %d for the %d time\n", UIDcookie, current_visit_count);
+				UIDcookie = -1;
+			}
+		} else /*** user did not provide any Cookie ***/
+			UIDcookie = get_new_UID();
 
 /*** TO BE OPTIONALLY CHANGED START ***/
 		if (http_method == METHOD_NONE || http_method == METHOD_POST) {
@@ -403,6 +527,9 @@ void manage_http_requests(int client_fd
 				 ***/
 /*** TO BE DONE 7.0 START ***/
 
+				if(difftime(my_timegm(&since_tm), stat_p->st_mtime) <= 0){
+					http_method = METHOD_NOT_CHANGED;
+				}
 
 /*** TO BE DONE 7.0 END ***/
 

@@ -26,8 +26,15 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
     int no_response_threads[MAX_CONNECTIONS]; /* for each connection, how many response threads */
 
     pthread_t thread_ids[MAX_THREADS];
-    int connection_no[MAX_THREADS]; /* connection_no[i] >= 0 means that i-th thread belongs to connection connection_no[i] */
-    pthread_t *to_join[MAX_THREADS]; /* for each thread, the pointer to the previous (response) thread, if any */
+
+	/* connection_no[i] >= 0 means that i-th thread belongs to connection connection_no[i].
+		connection_no[i] sarà < MAX_CONNECTIONS (4);
+
+		ES: [0, 0, 2, 2, 2, 1 ...] indica che i primi due thread sono della connessione numero 0,
+		i tre seguenti della numero 2, ecc... 
+	*/
+    int connection_no[MAX_THREADS];
+    pthread_t* to_join[MAX_THREADS]; /* for each thread, the pointer to the previous (response) thread, if any */
 
     int no_free_threads = MAX_THREADS - 2 * MAX_CONNECTIONS; /* each connection has one thread listening and one reserved for replies */
     struct response_params thread_params[MAX_THREADS - MAX_CONNECTIONS]; /* params for the response threads (the first MAX_CONNECTIONS threads are waiting/parsing requests) */
@@ -35,42 +42,41 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t threads_mutex = PTHREAD_MUTEX_INITIALIZER; /* protects the access to thread-related data structures */
 
     static int reserve_unused_thread() {
-	int idx;
-	for (idx = MAX_CONNECTIONS; idx < MAX_THREADS; ++idx)
-		if (connection_no[idx] == FREE_SLOT) {
-			connection_no[idx] = RESERVED_SLOT;
-			return idx;
-		}
-	assert(0);
-	return -1;
+		int idx;
+		for (idx = MAX_CONNECTIONS; idx < MAX_THREADS; ++idx)
+			if (connection_no[idx] == FREE_SLOT) {
+				connection_no[idx] = RESERVED_SLOT;
+				return idx;
+			}
+		assert(0);
+		return -1;
     }
 
-    int find_unused_thread_idx(int conn_no)
-    {
-	int idx = -1;
-	pthread_mutex_lock(&threads_mutex);
-	if (no_response_threads[conn_no] > 0) { /* reserved thread already used, try to find another (unused) one */
-		if (no_free_threads > 0) {
-			--no_free_threads;
-			++no_response_threads[conn_no];
-			idx = reserve_unused_thread();
-			pthread_mutex_unlock(&threads_mutex);
-			return idx;
-		}
-		pthread_mutex_unlock(&threads_mutex);
-		join_all_threads(conn_no);
+    int find_unused_thread_idx(int conn_no){
+		int idx = -1;
 		pthread_mutex_lock(&threads_mutex);
-	}
-	assert(no_response_threads[conn_no] == 0);
-	no_response_threads[conn_no] = 1;
-	idx = reserve_unused_thread();
-	pthread_mutex_unlock(&threads_mutex);
-	return idx;
+		if (no_response_threads[conn_no] > 0) { /* reserved thread already used, try to find another (unused) one */
+			if (no_free_threads > 0) {
+				--no_free_threads;
+				++no_response_threads[conn_no];
+				idx = reserve_unused_thread();
+				pthread_mutex_unlock(&threads_mutex);
+				return idx;
+			}
+			pthread_mutex_unlock(&threads_mutex);
+			join_all_threads(conn_no);
+			pthread_mutex_lock(&threads_mutex);
+		}
+		assert(no_response_threads[conn_no] == 0);
+		no_response_threads[conn_no] = 1;
+		idx = reserve_unused_thread();
+		pthread_mutex_unlock(&threads_mutex);
+
+		return idx;
     }
 
-    void join_all_threads(int conn_no)
-    {
-	size_t i;
+    void join_all_threads(int conn_no){
+		size_t i;
 
 	/*** compute the index i of the thread to join,
 	 *** call pthread_join() on thread_ids[i], and update shared variables
@@ -78,6 +84,22 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
 	 *** connection_no[i] ***/
 /*** TO BE DONE 7.1 START ***/
 
+		//Guarda tutti i thread
+		for(i = 0; i < MAX_THREADS; ++i){
+			//Se il thread appartiene alla connessione conn_no:
+			if(connection_no[i] == conn_no){
+
+				//attendi la sua fine e aggiorna le variabili d'ambiente.
+				//puoi non chiamare mutex_lock e unlock perche sono gia 
+				//state chiamate prima della chiamata di questa funzione.
+				if(!pthread_join(thread_ids[i], NULL))
+					fail("--ERRORE: pthread_join failed in join_all_threads\n");
+
+				no_free_threads++;
+				no_response_threads[conn_no]--;
+				connection_no[i] = FREE_SLOT;
+			}
+		}
 
 /*** TO BE DONE 7.1 END ***/
 
@@ -97,6 +119,24 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
 	 *** avoiding race conditions ***/
 /*** TO BE DONE 7.1 START ***/
 
+	if(thrd_no != 0){
+		i = thrd_no-1;
+
+		conn_no = connection_no[i];
+
+		//attendi la terminazione del thread
+		if(!pthread_join(thread_ids[i], NULL))
+			fail("--ERRORE: pthread_join failed in join_prev_thread\n");
+
+		pthread_mutex_lock(&threads_mutex);
+
+		//aggiorna le variabili globali
+		no_free_threads++;
+		no_response_threads[conn_no]--;
+		connection_no[i] = FREE_SLOT;
+
+		pthread_mutex_unlock(&threads_mutex);
+	}
 
 /*** TO BE DONE 7.1 END ***/
 
@@ -123,6 +163,8 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #else /* #ifndef INCaPACHE_7_1 */
 
+	//questo codice è eseguito se eseguiamo INCaPACHE_7_0:
+
     pthread_t thread_ids[MAX_CONNECTIONS];
     int connection_no[MAX_CONNECTIONS];
 
@@ -142,6 +184,7 @@ void *client_connection_thread(void *vp)
 	/*** properly initialize the thread queue to_join ***/
 /*** TO BE DONE 7.1 START ***/
 
+	to_join[connection_no] = NULL;
 
 /*** TO BE DONE 7.1 END ***/
 
@@ -182,6 +225,25 @@ char *get_mime_type(char *filename)
 	/*** What is missing here to avoid race conditions ? ***/
 /*** TO BE DONE 7.0 START ***/
 
+	/*
+		Dalle slide:
+		Quando si hanno più flussi di esecuzione, si parla di race condition
+		quando il risultato finale dipende dalla temporizzazione o dall’ordine
+		con cui vengono schedulati.
+			- La computazione è non-deterministica
+			- Per esempio, si ha una race-condition quando più thread eseguono (più
+			  o meno allo stesso tempo) una sezione critica.
+
+		Per evitare questi problemi, serve sincronizzazione fra i thread
+		alle volte, anche di processi diversi.
+
+		Esistono tante primitive di sincronizzazione, ... usiamo solo le primitive per la mutua esclusione:
+		pthread_mutex_lock e pthread_mutex_unlock
+	*/
+
+	//introduci un lock mutex sul thread
+	pthread_mutex_lock(&mime_mutex);
+
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -194,6 +256,8 @@ char *get_mime_type(char *filename)
 	/*** What is missing here to avoid race conditions ? ***/
 /*** TO BE DONE 7.0 START ***/
 
+	//rilascia il lock mutex dal thread
+	pthread_mutex_unlock(&mime_mutex);
 
 /*** TO BE DONE 7.0 END ***/
 
@@ -207,8 +271,8 @@ char *get_mime_type(char *filename)
 #ifdef INCaPACHE_7_1
 
 void send_resp_thread(int out_socket, int response_code, int cookie,
-		      int is_http1_0, int connection_idx, int new_thread_idx,
-		      char *filename, struct stat *stat_p)
+	int is_http1_0, int connection_idx, int new_thread_idx,
+	char *filename, struct stat *stat_p)
 {
 	struct response_params *params =  thread_params + (new_thread_idx - MAX_CONNECTIONS);
 	debug(" ... send_resp_thread(): idx=%lu\n", (unsigned long)(params - thread_params));
@@ -224,6 +288,13 @@ void send_resp_thread(int out_socket, int response_code, int cookie,
 	/*** enqueue the current thread in the "to_join" data structure ***/
 /*** TO BE DONE 7.1 START ***/
 
+	//DAL MAN DI pthread_self: 	
+	//	RETURN VALUE:
+    //		This function always succeeds, returning the calling thread's ID
+	pthread_t this = pthread_self();
+
+	if(new_thread_idx != 0)
+		to_join[new_thread_idx-1] = &this;
 
 /*** TO BE DONE 7.1 END ***/
 

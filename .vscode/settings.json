@@ -1,6 +1,7 @@
 {
     "FSharp.inlayHints.parameterNames": false,
     "FSharp.inlayHints.enabled": false,
+    "C_Cpp.dimInactiveRegions": false,
     "C_Cpp.errorSquiggles": "disabled",
     "files.associations": {
         "sstream": "c",
