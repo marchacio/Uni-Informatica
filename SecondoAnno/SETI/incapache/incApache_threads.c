@@ -22,24 +22,35 @@ pthread_mutex_t accept_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #ifdef INCaPACHE_7_1
-    int client_sockets[MAX_CONNECTIONS]; /* for each connection, its socket FD */
-    int no_response_threads[MAX_CONNECTIONS]; /* for each connection, how many response threads */
 
+	//for each connection, its socket FD
+    int client_sockets[MAX_CONNECTIONS];
+
+	//for each connection, how many response threads
+    int no_response_threads[MAX_CONNECTIONS];
+
+	//lista dei thread
     pthread_t thread_ids[MAX_THREADS];
 
 	/* connection_no[i] >= 0 means that i-th thread belongs to connection connection_no[i].
-		connection_no[i] sarà < MAX_CONNECTIONS (4);
 
 		ES: [0, 0, 2, 2, 2, 1 ...] indica che i primi due thread sono della connessione numero 0,
 		i tre seguenti della numero 2, ecc... 
 	*/
     int connection_no[MAX_THREADS];
-    pthread_t* to_join[MAX_THREADS]; /* for each thread, the pointer to the previous (response) thread, if any */
 
-    int no_free_threads = MAX_THREADS - 2 * MAX_CONNECTIONS; /* each connection has one thread listening and one reserved for replies */
-    struct response_params thread_params[MAX_THREADS - MAX_CONNECTIONS]; /* params for the response threads (the first MAX_CONNECTIONS threads are waiting/parsing requests) */
+	//for each thread, the pointer to the previous (response) thread, if any
+    pthread_t* to_join[MAX_THREADS];
 
-    pthread_mutex_t threads_mutex = PTHREAD_MUTEX_INITIALIZER; /* protects the access to thread-related data structures */
+	//each connection has one thread listening and one reserved for replies
+    int no_free_threads = MAX_THREADS - 2 * MAX_CONNECTIONS;
+
+	//params for the response threads (the first MAX_CONNECTIONS threads are waiting/parsing requests)
+    struct response_params thread_params[MAX_THREADS - MAX_CONNECTIONS]; 
+
+	//protects the access to thread-related data structures
+    pthread_mutex_t threads_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 
     static int reserve_unused_thread() {
 		int idx;
@@ -85,23 +96,35 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
 /*** TO BE DONE 7.1 START ***/
 
 		//Guarda tutti i thread
-		for(i = 0; i < MAX_THREADS; ++i){
+		for(i = MAX_CONNECTIONS; i < MAX_THREADS; ++i)
 			//Se il thread appartiene alla connessione conn_no:
 			if(connection_no[i] == conn_no){
 
 				//attendi la sua fine e aggiorna le variabili d'ambiente.
 				//puoi non chiamare mutex_lock e unlock perche sono gia 
 				//state chiamate prima della chiamata di questa funzione.
-				if(!pthread_join(thread_ids[i], NULL))
-					fail("--ERRORE: pthread_join failed in join_all_threads\n");
+				int ret = pthread_join(thread_ids[i], NULL);
+				if(ret){
+					printf("--ERRORE join_all_threads:\n");
+
+					//Stampa messaggio di errore
+					if(ret == EDEADLK)
+						printf("----ERROR: A deadlock was detected (e.g., two threads tried to join with each other); or thread specifies the calling thread\n");
+					if(ret == EINVAL)
+						printf("----ERROR: thread is not a joinable thread or another thread is already waiting to join with this thread\n");
+					if(ret == ESRCH)
+						printf("----ERROR: No thread with the ID %li could be found\n", thread_ids[i]);
+				}
+
+				pthread_mutex_lock(&threads_mutex);
 
 				no_free_threads++;
 				no_response_threads[conn_no]--;
 				connection_no[i] = FREE_SLOT;
-			}
-		}
 
-/*** TO BE DONE 7.1 END ***/
+				pthread_mutex_unlock(&threads_mutex);
+			}
+		/*** TO BE DONE 7.1 END ***/
 
     }
 
@@ -119,27 +142,45 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
 	 *** avoiding race conditions ***/
 /*** TO BE DONE 7.1 START ***/
 
-	if(thrd_no != 0){
-		i = thrd_no-1;
+	//controlla che esista un thread in coda
+	if(to_join[thrd_no] == NULL)
+		return;
 
-		conn_no = connection_no[i];
+	//Guarda tutti i thread e trova l'index del thread precedente a thrd_no
+	for(i = MAX_CONNECTIONS; i < MAX_THREADS; ++i)
+		if(thread_ids[i] == *(to_join[thrd_no]))
+			break;
+	//a questo punto i è impostato sul thread precedente a thrd_no
+	
+	conn_no = connection_no[i];
 
-		//attendi la terminazione del thread
-		if(!pthread_join(thread_ids[i], NULL))
-			fail("--ERRORE: pthread_join failed in join_prev_thread\n");
+	//attendi la terminazione del thread;
+	//DAL MAN:
+	//	RETURN VALUE
+	//	On success, pthread_join() returns 0; on error, it returns an error number
+	int ret = pthread_join(thread_ids[i], NULL);
+	if(ret){
+		printf("--ERRORE join_prev_thread:\n");
 
-		pthread_mutex_lock(&threads_mutex);
-
-		//aggiorna le variabili globali
-		no_free_threads++;
-		no_response_threads[conn_no]--;
-		connection_no[i] = FREE_SLOT;
-
-		pthread_mutex_unlock(&threads_mutex);
+		//Stampa messaggio di errore
+		if(ret == EDEADLK)
+			printf("----ERROR: A deadlock was detected (e.g., two threads tried to join with each other); or thread specifies the calling thread\n");
+		if(ret == EINVAL)
+			printf("----ERROR: thread is not a joinable thread or another thread is already waiting to join with this thread\n");
+		if(ret == ESRCH)
+			printf("----ERROR: No thread with the ID %li could be found\n", thread_ids[i]);
 	}
 
-/*** TO BE DONE 7.1 END ***/
+	pthread_mutex_lock(&threads_mutex);
 
+	//aggiorna le variabili globali
+	no_free_threads++;
+	no_response_threads[conn_no]--;
+	connection_no[i] = FREE_SLOT;
+
+	pthread_mutex_unlock(&threads_mutex);
+
+/*** TO BE DONE 7.1 END ***/
     }
 
     void *response_thread(void *vp)
@@ -149,12 +190,12 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
 	debug(" ... response_thread() thread_no=%lu, conn_no=%d\n", (unsigned long) thread_no, connection_idx);
 	const size_t i = thread_no - MAX_CONNECTIONS;
 	send_response(client_sockets[connection_idx],
-		      thread_params[i].code,
-		      thread_params[i].cookie,
-		      thread_params[i].is_http1_0,
-		      (int)thread_no,
-		      thread_params[i].filename,
-		      thread_params[i].p_stat);
+		thread_params[i].code,
+		thread_params[i].cookie,
+		thread_params[i].is_http1_0,
+		(int)thread_no,
+		thread_params[i].filename,
+		thread_params[i].p_stat);
 	debug(" ... response_thread() freeing filename and stat\n");
 	free(thread_params[i].filename);
 	free(thread_params[i].p_stat);
@@ -288,13 +329,8 @@ void send_resp_thread(int out_socket, int response_code, int cookie,
 	/*** enqueue the current thread in the "to_join" data structure ***/
 /*** TO BE DONE 7.1 START ***/
 
-	//DAL MAN DI pthread_self: 	
-	//	RETURN VALUE:
-    //		This function always succeeds, returning the calling thread's ID
-	pthread_t this = pthread_self();
-
-	if(new_thread_idx != 0)
-		to_join[new_thread_idx-1] = &this;
+	to_join[new_thread_idx] = to_join[connection_idx];
+	to_join[connection_idx] = &(thread_ids[new_thread_idx]);
 
 /*** TO BE DONE 7.1 END ***/
 
