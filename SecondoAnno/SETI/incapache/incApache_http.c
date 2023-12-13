@@ -112,16 +112,16 @@ void send_response(int client_fd, int response_code, int cookie,
 				stat_p = &stat_buffer;
 				if (stat(filename, stat_p)) {
 				    debug("stat failed");
-                                    response_code = RESPONSE_CODE_INTERNAL_ERROR;
-                                    goto int_err;
+					response_code = RESPONSE_CODE_INTERNAL_ERROR;
+					goto int_err;
 				}
 			} else {
 				fd = open(filename, O_RDONLY);
 				if (fd<0) {
 				    debug("send_response: cannot open file for reading (has the file vanished?)");
-                                    response_code = RESPONSE_CODE_INTERNAL_ERROR;
-                                    goto int_err;
-                                  }
+					response_code = RESPONSE_CODE_INTERNAL_ERROR;
+					goto int_err;
+				}
 				debug("    ... send_response(%d, %s): opened file %d\n", response_code, filename, fd);
 			}
 			mime_type = get_mime_type(filename);

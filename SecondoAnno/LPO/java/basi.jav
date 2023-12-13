@@ -206,6 +206,114 @@ public class TimerClass implements Timer { // TimerClass ≤ Timer
 //       possono essere inizializzate.
 
 
+//-----------------------------------------------------------
+//-----------------EREDITARIETA' TRA CLASSI------------------
+//-----------------------------------------------------------
+//
+//Data una classe C, essa può essere "estesa" (aggiungendo
+//metodi e dati) con la parola "extends".
+//L'esempio seguente è fatto con le interfacce:
+public interface Timer {
+    boolean isRunning();
+    int getTime();
+    void tick();
+    int reset(int minutes);
+}
+
+public interface StoppableTimer extends Timer {
+    boolean stopped();
+    void stop();
+    void restart();
+}
+
+//In questo esempio StoppableTimer ha dei metodi in più di Timer.
+//L'ereditarietà può avvenire anche tra classi, non per forza interfacce 
+//con una piccola differenza:
+//l'eredità tra classi è SINGOLA (una classe può essere l'estensione di 
+//solo un'altra classe) mentre l'ereditarietà tra interfacce è MULTIPLA.
+
+//I costruttori non sono ereditati tra sottoclassi:
+//questo vuol dire che tutte le sottoclassi hanno bisogno di un costruttore loro.
+
+
+//--------------PROTECTED--------------
+//Con l'ereditarietà bisogna introdurre un nuovo modificatore d'accesso:
+protected int time = 60;
+//grazie a "protected", il campo "time" è come se fosse private ma accessibile
+//dalle sottoclassi, ovvero tutte le classi che estendono la classe contenente time.
+
+//--------------OVERRIDE--------------
+//Con l'ereditarietà bisogna anche aggiungere il concetto di override:
+@Override
+public boolean isRunning() {...}
+//con la parola "Override" si sovrascrive il metodo isRunning definito dalla 
+//classe superiore rispetto alla classe che esegue l'override (ovvero la classe figlia).
+
+//--------------SUPER--------------
+//"super.method()" è una chiamata diretta al metodo "method()" della classe madre.
+//Ovviamente fa riferimento all'istanza dell'oggetto "this".
+//Si chiama super perche in gergo la classe madre è chiamata SUPERCLASSE.
+public class StoppableTimerClass extends TimerClass {
+    ...
+    @Override
+    public boolean isRunning() {
+        // calls ’isRunning’ of ’TimerClass’ on target object ’this’
+        return super.isRunning() && !this.stopped();
+    }
+    ...
+}
+
+//-------------------------------------------------------
+//--------------------CLASSI ASTRATTE--------------------
+//-------------------------------------------------------
+//Partendo da un esempio:
+/*
+Abbiamo due classi A e B che implementano l'interfaccia I.
+Vogliamo aggiungere una funzione funz() uguale per entrambe le classi.
+Teoricamente bisognerebbe riscrivere funz() due volte, una per A e una per B.
+
+Per evitare questa ripetizione e migliorare la scalabilità del codice,
+esistono le CLASSI ASTRATTE:
+
+sono una via di mezzo tra interfacce e classi, infatti esse implementano un'interfaccia
+lasciando inalterati i metodi e senza implementazione, ma danno la possibilità
+di aggiungere altri metodi (non specificati nell'interfaccia implementata) con
+la loro implementazione.
+Inoltre si possono creare metodi non implementati, come nelle interfacce.
+
+Si definiscono aggiungendo la parola "abstract" prima di "class".
+
+ALTRO: 
+Anche le classi astratte hanno bisogno del loro costruttore.
+Come per le interfacce, le classi astratte non possono essere utilizzate
+per creare oggetti.
+ES:*/
+public abstract class AbstractTimer implements Timer {
+
+    protected AbstractTimer(){} // for subclasses use
+
+    protected static int checkMinutes(int minutes) { // for subclasses use
+        if (minutes < 0 || minutes > 60) throw new IllegalArgumentException();
+        return minutes;
+    }
+
+    public boolean isRunning() {
+        return this.getTime() > 0;
+    }
+
+    // the other methods of Timer are not implemented
+    abstract public int getTime(); // optional declaration
+    abstract public void tick(); // optional declaration
+    abstract public int reset(int minutes); // optional declaration
+}
+
+//Come si nota nell'esempio, i metodi getTime, tick e reset non sono implementati
+//perche sono parte dell'interfaccia.
+//Allo stesso tempo, la classe astratta aggiunge due metodi (checkMinutes e 
+//isRunning), implementandoli; questi due metodi potranno essere utilizzati
+//dalle sottoclassi che estendono AbstractTimer.
+
+
 //---------------------------------------------
 //--------------------ARRAY--------------------
 //---------------------------------------------
@@ -217,6 +325,25 @@ array = new int[10] //array è stato inizializzato dinamicamente ed è utilizzab
 
 //Per gli array multidimensionali si applica la sintassi come in c++:
 int[][] matrice = new int[3][] //solo l'ultima size è opzionale
+
+
+//L'ultimo elemento di un costruttore o di una funzione può avere 
+//arità variabile:
+public static int max(int first, int... others) {
+
+    // in the body ’others’ is considered an array of type ’int[]’
+    int res = first;
+    for (int e : others)
+        if (e > res)
+            res = e;
+
+    return res;
+}
+//A questo punto max() può essere chiamato con un primo elemento di tipo
+//int, e il secondo di tipo int o list<int>
+
+    
+
 
 
 //---------------------------------------------
