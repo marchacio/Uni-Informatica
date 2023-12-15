@@ -10,7 +10,7 @@ cd /home/marco/Uni-Informatica/SecondoAnno/SETI/incapache
 
 #rimuovi il vecchio file, cosi in caso la compilazione 
 #non vada a buon fine, non esegue nulla
-rm bin/incapache 
+rm -f bin/incapache 
 
 #compila...
 make
