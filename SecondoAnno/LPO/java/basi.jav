@@ -265,7 +265,10 @@ public class StoppableTimerClass extends TimerClass {
 
 //--------------TIPI GENERICI--------------
 //Se una classe deve poter accettare qualsiasi tipo di oggetto all'interno
-//delle sue variabili, queste sono da definire come TIPI GENERICI:
+//delle sue variabili, queste sono da definire come TIPI GENERICI.
+//Per definire una classe che accetta tipi generici, bisogna aggiungere 
+//  <T1 ...>
+//subito dopo il nome della classe nella sua definizione:
 public class Pair<T1,T2> { // T1, T2 generic type parameters 
     private final T1 fst;
     private final T2 snd;
