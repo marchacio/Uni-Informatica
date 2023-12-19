@@ -263,6 +263,42 @@ public class StoppableTimerClass extends TimerClass {
     ...
 }
 
+//--------------TIPI GENERICI--------------
+//Se una classe deve poter accettare qualsiasi tipo di oggetto all'interno
+//delle sue variabili, queste sono da definire come TIPI GENERICI:
+public class Pair<T1,T2> { // T1, T2 generic type parameters 
+    private final T1 fst;
+    private final T2 snd;
+
+    public Pair(T1 fst, T2 snd) { this.fst = fst; this.snd = snd; }
+
+    public T1 getFst() { return fst; }
+    public T2 getSnd() { return snd; }
+}
+...
+Pair<String, Color> p = new Pair<String,Color>("a string", Color.RED);
+//Meglio utilizzare i tipi generici rispetto alla classe Object in quanto
+//questa è la superclasse di tutte le classi, quindi può essere soggetta 
+//a casting tra classi diverse che potrebbero creare eccezioni.
+//Utilizzando T1, T2 (ma si può usare anche A, B, K, E...) si impone che 
+//il tipo di quella variabile sia uno solo e non generico.
+
+
+//--------------OVERLOAD--------------
+//L'overload di un metodo è la definizione multipla dello stesso metodo
+//ma con argomenti diversi:
+public class Overload {
+    public String m(int i) { return "int"; }
+    public String m(float f) { return "float"; }
+    public String m(Number n) { return "Number"; }
+    public String m(Number... nums) { return "Number..."; }
+    public String m(Object obj) { return "OBJ"; }
+}
+//come si può notare, il metodo "m" ha sempre lo stesso nome e accetta diversi
+//argomenti con i quali fa operazioni diverse.
+//in generale, l'overloading dei metodi è una pratica da evitare.
+
+
 //-------------------------------------------------------
 //--------------------CLASSI ASTRATTE--------------------
 //-------------------------------------------------------
@@ -342,9 +378,6 @@ public static int max(int first, int... others) {
 //A questo punto max() può essere chiamato con un primo elemento di tipo
 //int, e il secondo di tipo int o list<int>
 
-    
-
-
 
 //---------------------------------------------
 //--------------------MAIN---------------------
@@ -403,3 +436,14 @@ Project (root):
 //
 //Per importare tutti i sottofile di una cartella, utilizza l'asterisco:
 import java.System.*
+
+//-------------COMPILAZIONE PACKAGES-------------
+//per compilare tutti i file inclusi in un pack, da terminale vai nella 
+//cartella esterna ad esso ed esegui:
+
+//  javac /project/path/to/files/*.java
+
+//Poi per eseguire il file:
+
+//  java -ea project.path.to.file.NOMEFILE_SENZA_ESTENSIONE
+
