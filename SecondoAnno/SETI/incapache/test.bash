@@ -4,9 +4,10 @@
 #N può essere passato come unico argomento allo script.
 
 N=100
-if [[ $# != 0 ]] ; then N=$1; fi
+if [[ $# != 0 ]] ; then N=$1; fi 
 
 for (( c=0; c<N; c++ ))
 do
-   curl localhost:8000/
+   #esegui la richiesta della homepage e di un paio di immagini
+   curl localhost:8000/ localhost:8000/images/calendar.png localhost:8000/images/uncadunca.jpg
 done 
