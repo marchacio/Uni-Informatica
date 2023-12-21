@@ -104,7 +104,7 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
 				//puoi non chiamare mutex_lock e unlock perche sono gia 
 				//state chiamate prima della chiamata di questa funzione.
 				if(pthread_join(thread_ids[i], NULL))
-					printf("--ERRORE join_all_threads\n");
+					debug("--ERRORE join_all_threads\n");
 
 				pthread_mutex_lock(&threads_mutex);
 
@@ -132,17 +132,18 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
 	 *** avoiding race conditions ***/
 /*** TO BE DONE 7.1 START ***/
 
-
 	//controlla che esista un thread in coda e non sia questo stesso thread
 	if(to_join[thrd_no] == NULL || *(to_join[thrd_no]) == pthread_self()){
-		printf("--INFO: No thread to join\n");
+		debug("--INFO: No thread to join\n");
 		return;
 	}
 
 	//Guarda tutti i thread e trova l'index del thread precedente a thrd_no
 	for(i = MAX_CONNECTIONS; i < MAX_THREADS; ++i)
-		if(thread_ids[i] == *(to_join[thrd_no]))
+		if(thread_ids[i] == *(to_join[thrd_no])){
+			debug("\nPrev thread index found: %li\n", i);
 			break;
+		}
 	//a questo punto i è impostato sul thread precedente a thrd_no
 	
 	conn_no = connection_no[i];
@@ -152,7 +153,7 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
 	//	RETURN VALUE
 	//	On success, pthread_join() returns 0; on error, it returns an error number
 	if(pthread_join(thread_ids[i], NULL))
-		printf("--ERRORE join_prev_thread");
+		fail("--ERRORE join_prev_thread\n"); //termina
 	
 	pthread_mutex_lock(&threads_mutex);
 
