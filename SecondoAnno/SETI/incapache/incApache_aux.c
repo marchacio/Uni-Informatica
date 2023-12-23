@@ -82,8 +82,6 @@ time_t my_timegm(struct tm *tm)
 	timeZone = my_malloc((sizeof(char))*3);
 	strcpy(timeZone, "IT");
 	
-	//TODO controlla che funzioni sta roba
-
 /*** TO BE DONE 7.0 END ***/
 
 	setenv("TZ", "", 1); 	//crea la var d'ambiente TZ (nel caso esista gia, la sovrascrive)
