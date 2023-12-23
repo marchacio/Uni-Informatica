@@ -577,11 +577,7 @@ void manage_http_requests(int client_fd
 
 /*** TO BE OPTIONALLY DONE START ***/
 
-			debug("    ... sending header for file %s\n", filename);
-			free(stat_p);
-			
-			break;
-			
+
 
 /*** TO BE OPTIONALLY DONE END ***/
 
