@@ -146,8 +146,12 @@ void send_response(int client_fd, int response_code, int cookie,
 
 			//con il comando stat, ottieni le info sul file e le inserisce
 			//nel buffer stat_buffer
-			stat(filename, &stat_buffer);
-			
+			if(stat(filename, &stat_buffer)){
+				debug("stat failed");
+				response_code = RESPONSE_CODE_INTERNAL_ERROR;
+				goto int_err;
+			}
+				
 			//ottieni le info dal buffer:
 			file_size = stat_buffer.st_size;
 
@@ -181,7 +185,11 @@ void send_response(int client_fd, int response_code, int cookie,
 
 			//con il comando stat, ottieni le info sul file e le inserisce
 			//nel buffer stat_buffer
-			fstat(fd, &stat_buffer);
+			if(fstat(fd, &stat_buffer)){
+				debug("fstat failed");
+				response_code = RESPONSE_CODE_INTERNAL_ERROR;
+				goto int_err;
+			}
 			
 			//ottieni le info dal buffer:
 			file_size = stat_buffer.st_size;
@@ -196,7 +204,7 @@ void send_response(int client_fd, int response_code, int cookie,
 		}
 		break;
 	case RESPONSE_CODE_INTERNAL_ERROR:
-            int_err:
+		int_err:
 		strcat(http_header, "500 Internal Error");
 		break;
 	default:
@@ -212,7 +220,11 @@ void send_response(int client_fd, int response_code, int cookie,
 
 			//con il comando stat, ottieni le info sul file e le inserisce
 			//nel buffer stat_buffer
-			fstat(fd, &stat_buffer);
+			if(fstat(fd, &stat_buffer)){
+				debug("fstat failed");
+				response_code = RESPONSE_CODE_INTERNAL_ERROR;
+				goto int_err;
+			}
 			
 			//ottieni le info dal buffer:
 			file_size = stat_buffer.st_size;

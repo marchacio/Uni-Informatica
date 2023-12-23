@@ -12,9 +12,16 @@ const string ANNA = "5565836";
 //Lunghezza del codice matricola
 const int LUNGH_MATR = 7;
 
+//Variabile per la scelta di stampare o meno la matrice triangolare
+char scelta;
+
 //-----------------------------------------------------------------------
 //-------------------------FUNZIONI AUSILIARIE---------------------------
 //-----------------------------------------------------------------------
+
+bool stampaMatriceTriangolare() {
+    return scelta != 'N' && scelta != 'n';
+}
 
 double fattoriale(double n){
     double fattor = 1;
@@ -39,13 +46,6 @@ void printMatrice(vector<vector<float>> A) {
 		printVettore(v);
 }
 
-//-----------------------------------------------------------------------
-//-------------------------------ESERCIZI--------------------------------
-//-----------------------------------------------------------------------
-
-//------------------------------------------------------------------------
-//------------------------------ESERCIZIO 1-------------------------------
-//------------------------------------------------------------------------
 
 //crea e ritorna la matrice di Pascal come definita nel labo
 vector<vector<float>> defMatricePascal() {
@@ -90,23 +90,30 @@ vector<vector<float>> defMatriceTriangolare() {
     return matriceTriangolare;
 } 
 
+//-----------------------------------------------------------------------
+//-------------------------------ESERCIZI--------------------------------
+//-----------------------------------------------------------------------
+
+//------------------------------------------------------------------------
+//------------------------------ESERCIZIO 1-------------------------------
+//------------------------------------------------------------------------
+
 //norma infinito definita come il max tra le norme dei vettori della matrice quadrata.
 float normaInfinito(vector<vector<float>> matrice) {
     float normaInf;
 
     //per ogni vettore:
     for(unsigned int i = 0; i<matrice.size(); ++i){
-        //variabile che contiene la somma di tutti gli elementi
-        //del vettore i.
-        float sommaElementiVettoreI = 0;
 
-        //per ogni elemento del vettore i aggiungi il suo elevamento alla seconda
+        float normaVettoreI = 0;
+
+        //per ogni elemento del vettore
         for(unsigned int j = 0; j<matrice.size(); ++j)
-            sommaElementiVettoreI += pow(matrice[i][j], 2);
+            //somma dei moduli dei valori della riga i
+            normaVettoreI += fabs(matrice[i][j]);
         
         //se la norma i è la prima o è maggiore della norma 
         //infinito trovata fin'ora:
-        float normaVettoreI = sqrt(sommaElementiVettoreI);
         if(i == 0 || normaVettoreI > normaInf)
             normaInf = normaVettoreI;
     }
@@ -125,7 +132,8 @@ void es1(vector<vector<float>> matrice1, vector<vector<float>> matrice2, vector<
     cout << "Norma Infinito della matrice1: " << normaInfinito(matrice1) << "\n";
     cout << "Norma Infinito della matrice2: " << normaInfinito(matrice2) << "\n";    
     cout << "Norma Infinito della matrice di Pascal: " << normaInfinito(matricePascal) << "\n";    
-    cout << "Norma Infinito della matrice triangolare: " << normaInfinito(matriceTriangolare) << "\n";
+    if(stampaMatriceTriangolare())
+        cout << "Norma Infinito della matrice triangolare: " << normaInfinito(matriceTriangolare) << "\n";
 }
 
 //------------------------------------------------------------------------
@@ -214,7 +222,9 @@ vector<vector<float>> Gauss(vector<vector<float>> A, vector<float> b) {
     //Variabile che conterrà il vettore b ridotto
 	vector<float> ridotta_B = b; 
 
-	//Algoritmo di Eliminazione Gaussiana
+	//Algoritmo di Eliminazione Gaussiana:
+
+    //Per ogni riga k della matrice A, con k = 0, ..., numeroR_A-1
 	for(unsigned int k = 0; k < numeroR_A-1; ++ k) {
 
 		//Esecuzione del pivoting parziale, per essere sicuri di avere il pivot 
@@ -325,8 +335,11 @@ void es2(vector<vector<float>> matrice1, vector<vector<float>> matrice2, vector<
     es2_singolaMatrice(matrice2);
     cout << "\n-- Matrice di Pascal" << endl;
     es2_singolaMatrice(matricePascal);
-    cout << "\n-- Matrice Triangolare" << endl;
-    es2_singolaMatrice(matriceTriangolare);
+
+    if(stampaMatriceTriangolare()){
+        cout << "\n-- Matrice Triangolare" << endl;
+        es2_singolaMatrice(matriceTriangolare); 
+    }
 }
 
 
@@ -405,10 +418,12 @@ void es3(vector<vector<float>> matrice1, vector<vector<float>> matrice2, vector<
 	es3_singolaMatrice(matrice2);
 	cout << "\n-- Matrice Pascal" << endl;
 	es3_singolaMatrice(matricePascal);
-	cout << "\n-- Matrice Triangolare" << endl;
-	es3_singolaMatrice(matriceTriangolare);
-}
 
+    if(stampaMatriceTriangolare()){
+        cout << "\n-- Matrice Triangolare" << endl;
+	    es3_singolaMatrice(matriceTriangolare);
+    }   
+}
 
 
 //-----------------------------------------------------------------------
@@ -425,6 +440,11 @@ int main() {
     vector<vector<float>> matricePascal = defMatricePascal();
     vector<vector<float>> matriceTriangolare = defMatriceTriangolare();
 
+    cout << "Al fine di migliorare la leggibilità dei risultati stampati in output, si vogliono stampare anche i risultati della matrice triangolare? (Y/N)\n";
+    cin >> scelta;
+
+    cout << "\n" << (stampaMatriceTriangolare() ? "La matrice triangolare verrà stampata" : "La matrice triangolare NON verrà stampata") << "\n\n";
+
     //Stampa tutte le matrici
     cout << "Le matrici analizzate:\n--Matrice 1:\n";
     printMatrice(matrice1);
@@ -432,8 +452,11 @@ int main() {
     printMatrice(matrice2);
     cout << "\n--Matrice di Pascal:\n";
     printMatrice(matricePascal);
-    cout << "\n--Matrice Triangolare:\n";
-    printMatrice(matriceTriangolare);
+
+    if(stampaMatriceTriangolare()){
+        cout << "\n--Matrice Triangolare:\n";
+        printMatrice(matriceTriangolare);
+    }
 
     //esegui il primo esercizio
     es1(matrice1, matrice2, matricePascal, matriceTriangolare);
