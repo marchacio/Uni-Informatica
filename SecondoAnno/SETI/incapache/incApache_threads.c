@@ -103,21 +103,8 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
 				//attendi la sua fine e aggiorna le variabili d'ambiente.
 				//puoi non chiamare mutex_lock e unlock perche sono gia 
 				//state chiamate prima della chiamata di questa funzione.
-				int ret = pthread_join(thread_ids[i], NULL);
-				if(ret){
-					printf("--ERRORE join_all_threads:\n");
-
-					//Stampa messaggio di errore (tutti presi dal MAN)
-					if(ret == EDEADLK)
-						if(pthread_self() == thread_ids[i])
-							printf("----ERROR: Current thread called join on himself\n");
-						else 
-							printf("----ERROR: A deadlock was detected (e.g., two threads tried to join with each other)\n");
-					if(ret == EINVAL)
-						printf("----ERROR: thread is not a joinable thread or another thread is already waiting to join with this thread\n");
-					if(ret == ESRCH)
-						printf("----ERROR: No thread with the ID %li could be found\n", thread_ids[i]);
-				}
+				if(pthread_join(thread_ids[i], NULL))
+					debug("--ERRORE join_all_threads\n");
 
 				pthread_mutex_lock(&threads_mutex);
 
@@ -145,17 +132,18 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
 	 *** avoiding race conditions ***/
 /*** TO BE DONE 7.1 START ***/
 
-
 	//controlla che esista un thread in coda e non sia questo stesso thread
 	if(to_join[thrd_no] == NULL || *(to_join[thrd_no]) == pthread_self()){
-		printf("--INFO: No thread to join\n");
+		debug("--INFO: No thread to join\n");
 		return;
 	}
 
 	//Guarda tutti i thread e trova l'index del thread precedente a thrd_no
 	for(i = MAX_CONNECTIONS; i < MAX_THREADS; ++i)
-		if(thread_ids[i] == *(to_join[thrd_no]))
+		if(thread_ids[i] == *(to_join[thrd_no])){
+			debug("\nPrev thread index found: %li\n", i);
 			break;
+		}
 	//a questo punto i è impostato sul thread precedente a thrd_no
 	
 	conn_no = connection_no[i];
@@ -164,22 +152,8 @@ pthread_mutex_t mime_mutex = PTHREAD_MUTEX_INITIALIZER;
 	//DAL MAN:
 	//	RETURN VALUE
 	//	On success, pthread_join() returns 0; on error, it returns an error number
-	int ret = pthread_join(thread_ids[i], NULL);
-	if(ret){
-		printf("--ERRORE join_prev_thread:\n");
-
-		//Stampa messaggio di errore (tutti presi dal MAN)
-		if(ret == EDEADLK){
-			if(pthread_self() == thread_ids[i])
-				printf("----ERROR: Current thread called join on itself\n");
-			else 
-				printf("----ERROR: A deadlock was detected (e.g., two threads tried to join with each other)\n");
-		} else if(ret == EINVAL)
-			printf("----ERROR: thread is not a joinable thread or another thread is already waiting to join with this thread\n");
-		else if(ret == ESRCH)
-			printf("----ERROR: No thread with the ID %li could be found\n", thread_ids[i]);
-	}
-
+	if(pthread_join(thread_ids[i], NULL))
+		fail("--ERRORE join_prev_thread\n"); //termina
 	
 	pthread_mutex_lock(&threads_mutex);
 
