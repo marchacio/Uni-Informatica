@@ -210,7 +210,7 @@ void send_response(int client_fd, int response_code, int cookie,
 	default:
 
 /*** TO BE OPTIONALLY CHANGED START ***/
-		strcat(http_header, "501 Method Not Implemented\r\nAllow: HEAD,GET");
+		strcat(http_header, "501 Method Not Implemented\r\nAllow: HEAD,GET,POST");
 /*** TO BE OPTIONALLY CHANGED END ***/
 
 		if ((fd = open(HTML_501, O_RDONLY)) >= 0) {
@@ -504,7 +504,7 @@ void manage_http_requests(int client_fd
 			UIDcookie = get_new_UID();
 
 /*** TO BE OPTIONALLY CHANGED START ***/
-		if (http_method == METHOD_NONE || http_method == METHOD_POST) {
+		if (http_method == METHOD_NONE) {
 /*** TO BE OPTIONALLY CHANGED END ***/
 
 			printf("method not implemented\n");
@@ -568,7 +568,7 @@ void manage_http_requests(int client_fd
 			case METHOD_GET :
 				debug("    ... sending file %s\n", filename);
 				SEND_RESPONSE(client_fd, RESPONSE_CODE_OK, UIDcookie, /*** OK, with body ***/
-#ifdef INCaPACHE_7_1
+#ifdef INCaPACHE_7_1 
 					      is_http1_0, connection_no, thread_idx,
 #endif
 					      filename, stat_p);
@@ -577,6 +577,11 @@ void manage_http_requests(int client_fd
 
 /*** TO BE OPTIONALLY DONE START ***/
 
+			debug("    ... sending header for file %s\n", filename);
+			free(stat_p);
+			
+			break;
+			
 
 /*** TO BE OPTIONALLY DONE END ***/
 
