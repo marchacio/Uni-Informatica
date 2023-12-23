@@ -504,7 +504,7 @@ void manage_http_requests(int client_fd
 			UIDcookie = get_new_UID();
 
 /*** TO BE OPTIONALLY CHANGED START ***/
-		if (http_method == METHOD_NONE) {
+		if (http_method == METHOD_NONE || http_method == METHOD_POST) {
 /*** TO BE OPTIONALLY CHANGED END ***/
 
 			printf("method not implemented\n");
