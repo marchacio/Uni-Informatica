@@ -9,11 +9,11 @@ ti mando un bacione <3
 
 # Nota importante (soprattutto per te)
 
-Fosse per me, ti direi che puoi copiare tutto il codice che vedi ma nella pratica non te lo consiglio per vari motivi:
+Fosse per me, ti direi che puoi copiare tutto il codice che vedi ma nella pratica **NON TE LO CONSIGLIO** per vari motivi:
 - Non è assolutamente detto che sia giusto, anzi probabilmente il contrario 🙂 (nel caso trovi qualche errore, o hai qualche domanda, puoi scrivere nella sezione "[Discussions](https://github.com/marchacio/Uni-Informatica/discussions)" di questo repo);
 - Non impari niente;
 - Ovviamente i prof controllano che il codice non sia copiato;
-- Per evitare problemi riguardanti il punto sopra, per "tutelarmi" carico il codice su GitHub ***DOPO*** la consegna del progetto su AW.
+- Per evitare problemi riguardanti il punto sopra e/o essere accusato di essere stato io ad aver copiato, per "tutelarmi" carico il codice su GitHub ***DOPO*** la consegna del progetto su AW ( [Я должен как-то прикрыть свою задницу](https://www.deepl.com/it/translator#ru/it/%D0%AF%20%D0%B4%D0%BE%D0%BB%D0%B6%D0%B5%D0%BD%20%D0%BA%D0%B0%D0%BA-%D1%82%D0%BE%20%D0%BF%D1%80%D0%B8%D0%BA%D1%80%D1%8B%D1%82%D1%8C%20%D1%81%D0%B2%D0%BE%D1%8E%20%D0%B7%D0%B0%D0%B4%D0%BD%D0%B8%D1%86%D1%83) ).
 
 Quindi il mio consiglio è di prendere spunto per capire come funzionano le cose, ma non copiare (sopratutto per te!).
 
